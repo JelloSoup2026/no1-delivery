@@ -402,9 +402,12 @@ async function changeMonth(dir) {
   if (currentMonth > 11) { currentMonth = 0; currentYear++; }
   if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
   selectedDate = null;
-  document.getElementById('day-panel-date').textContent = 'Select a day';
-  document.getElementById('day-panel-sub').textContent = '';
-  document.getElementById('day-panel-content').innerHTML = 'No date selected.';
+  const panelDate = document.getElementById('day-panel-date');
+  const panelSub  = document.getElementById('day-panel-sub');
+  const panelBody = document.getElementById('day-panel-content');
+  if (panelDate) panelDate.textContent = 'Select a day';
+  if (panelSub)  panelSub.textContent = '';
+  if (panelBody) panelBody.innerHTML = 'No date selected.';
   await loadData();
   renderCalendar();
 }
