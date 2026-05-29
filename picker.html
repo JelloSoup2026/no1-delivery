@@ -60,7 +60,7 @@ body{background:var(--bg);font-family:var(--font);font-size:14px;min-height:100v
   <div class="header-title" id="header-title">Picking List</div>
   <div class="header-sub">
     <span id="header-date"></span>
-    <button class="signout-btn" onclick="doSignout()">Sign out</button>
+    <button class="signout-btn" onclick="signOut()">Sign out</button>
   </div>
 </div>
 
@@ -90,14 +90,7 @@ body{background:var(--bg);font-family:var(--font);font-size:14px;min-height:100v
 let allJobs = [];
 let currentFilter = 'unpicked';
 
-const JOB_STATUSES = {
-  unpicked:{label:'Unpicked',color:'#a3a4a4',bg:'#f0f4f8'},
-  picked:{label:'Picked',color:'#8a5a00',bg:'#fef3dc'},
-  loaded:{label:'Loaded',color:'#0e7490',bg:'#ecfeff'},
-  departed:{label:'Departed',color:'#5b21b6',bg:'#f5f3ff'},
-  arrived:{label:'Arrived',color:'#00479f',bg:'#e5ebef'},
-  delivered:{label:'Delivered',color:'#1a7a4a',bg:'#e8f5ee'},
-};
+
 
 async function init() {
   const ok = await initApp(['picker','planner','branch_manager','super_admin']);
@@ -256,9 +249,7 @@ function showToast(msg, type = 'success') {
   setTimeout(() => toast.remove(), 3000);
 }
 
-async function doSignout() {
-  await signOut();
-}
+
 
 init();
 </script>
