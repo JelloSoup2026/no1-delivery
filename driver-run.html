@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>No.1 Delivery — Driver Run</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#00479f;--brand-mid:#4b7fb9;--brand-pale:#b4cbe1;
+  --bg:#f0f4f8;--surface:#fff;--border:#b4cbe1;--border2:#79a1cb;
+  --text:#1a1a2e;--text2:#565656;--text3:#a3a4a4;
+  --green:#1a7a4a;--green-bg:#e8f5ee;--green-border:#7ec8a0;
+  --amber:#8a5a00;--amber-bg:#fef3dc;--amber-border:#f0b429;
+  --red:#b91c1c;--red-bg:#fef2f2;--red-border:#fca5a5;
+  --teal:#0e7490;--teal-bg:#ecfeff;--teal-border:#67e8f9;
+  --radius:10px;--radius-lg:16px;
+  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+}
+body{background:var(--bg);font-family:var(--font);font-size:14px;min-height:100vh;padding-bottom:40px}
+
+/* HEADER */
+.run-header{background:var(--brand);padding:16px 16px 20px;position:sticky;top:0;z-index:10}
+.header-brand{font-size:11px;color:rgba(255,255,255,.6);font-weight:500;letter-spacing:.3px;margin-bottom:4px}
+.header-title{font-size:17px;font-weight:700;color:#fff;line-height:1.2}
+.header-sub{font-size:12px;color:rgba(255,255,255,.7);margin-top:4px}
+.progress-bar{height:5px;background:rgba(255,255,255,.2);border-radius:20px;margin-top:12px;overflow:hidden}
+.progress-fill{height:100%;background:#fff;border-radius:20px;transition:width .5s}
+
+/* STOP CARDS */
+.stops{padding:12px}
+.stop-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:12px;overflow:hidden;transition:all .2s}
+.stop-card.active-stop{border:2px solid var(--brand)}
+.stop-card.done-stop{border-color:var(--green-border);opacity:.8}
+.stop-card.po-stop{border-style:dashed}
+.stop-top{padding:14px 16px}
+.stop-num-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.stop-num{width:30px;height:30px;border-radius:50%;background:var(--brand);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stop-num.done{background:var(--green)}
+.stop-num.priority{background:var(--amber-border)}
+.stop-num.recovery{background:var(--red)}
+.stop-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px}
+.stop-invoice{font-size:12px;font-weight:700;color:var(--brand);font-family:var(--mono);letter-spacing:.3px}
+.stop-customer{font-size:16px;font-weight:700;color:var(--text);margin-top:2px;line-height:1.2}
+.stop-address{font-size:13px;color:var(--text2);margin-top:4px;line-height:1.4}
+.stop-items{font-size:12px;color:var(--text2);margin-top:8px;line-height:1.7;background:var(--bg);padding:8px 12px;border-radius:var(--radius)}
+.stop-actions{padding:12px 14px;border-top:0.5px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;background:var(--bg)}
+.action-btn{flex:1;min-width:80px;padding:12px 8px;border-radius:var(--radius);font-size:13px;font-weight:600;border:0.5px solid;cursor:pointer;font-family:var(--font);text-align:center;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px}
+.btn-maps{background:rgba(0,71,159,.06);color:var(--brand);border-color:var(--brand-pale)}
+.btn-call{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.btn-arrived{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
+.btn-deliver{background:var(--brand);color:#fff;border-color:var(--brand);width:100%}
+.btn-deliver:hover{background:#003a85}
+.btn-deliver:disabled{opacity:.5;cursor:not-allowed}
+
+/* PHOTO UPLOAD */
+.photo-section{padding:12px 14px;border-top:0.5px solid var(--border)}
+.photo-required-label{font-size:11px;font-weight:700;color:var(--red);letter-spacing:.3px;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.photo-drop{border:2px dashed var(--border2);border-radius:var(--radius);padding:20px;text-align:center;background:var(--surface);cursor:pointer;transition:all .15s}
+.photo-drop:hover{border-color:var(--brand);background:rgba(0,71,159,.03)}
+.photo-drop input{display:none}
+.photo-preview{background:var(--green-bg);border:0.5px solid var(--green-border);border-radius:var(--radius);padding:10px 14px;display:flex;align-items:center;gap:10px;margin-top:8px}
+.photo-preview-thumb{width:48px;height:48px;border-radius:6px;object-fit:cover;border:0.5px solid var(--green-border)}
+
+/* DELIVERED STATE */
+.delivered-row{background:var(--green-bg);border:0.5px solid var(--green-border);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.delivered-check{font-size:20px}
+.delivered-info{flex:1}
+.delivered-name{font-size:13px;font-weight:600;color:var(--green)}
+.delivered-time{font-size:11px;color:var(--green);opacity:.8;margin-top:1px;font-family:var(--mono)}
+
+/* COMPLETE BANNER */
+.complete-banner{background:var(--green);border-radius:var(--radius-lg);padding:24px;text-align:center;margin:12px}
+.complete-icon{font-size:40px;margin-bottom:8px}
+.complete-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:4px}
+.complete-sub{font-size:13px;color:rgba(255,255,255,.8)}
+
+/* SPINNER */
+.spinner{display:inline-block;width:20px;height:20px;border:3px solid rgba(0,71,159,.2);border-top-color:var(--brand);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:16px;color:var(--text2);font-size:14px}
+
+.error-screen{padding:32px 20px;text-align:center}
+.error-icon{font-size:48px;margin-bottom:16px}
+.error-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:8px}
+.error-sub{font-size:13px;color:var(--text2);line-height:1.6}
+
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.3px;border:0.5px solid}
+.tag-priority{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border)}
+.tag-recovery{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+.tag-shed{background:var(--teal-bg);color:var(--teal);border-color:var(--teal-border)}
+.status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="loading-screen">
+    <div class="spinner"></div>
+    <div>Loading your run...</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://mnhwcuawsdxeyzqkjdwq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uaHdjdWF3c2R4ZXl6cWtqZHdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMjM1ODksImV4cCI6MjA5NTU5OTU4OX0.ALToJk7zpFYRLZPwoAN7d8EHsU6AE0wNKfNxVCoS_tk';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const JOB_STATUSES = {
+  unpicked:{label:'Unpicked',color:'#a3a4a4',bg:'#f0f4f8'},
+  picked:{label:'Picked',color:'#8a5a00',bg:'#fef3dc'},
+  loaded:{label:'Loaded',color:'#0e7490',bg:'#ecfeff'},
+  departed:{label:'Departed',color:'#5b21b6',bg:'#f5f3ff'},
+  arrived:{label:'Arrived',color:'#00479f',bg:'#e5ebef'},
+  delivered:{label:'Delivered',color:'#1a7a4a',bg:'#e8f5ee'},
+};
+const STATUS_NEXT = {unpicked:'picked',picked:'loaded',loaded:'departed',departed:'arrived',arrived:'delivered'};
+
+let runData = null;
+let stops   = [];
+let photoFiles = {};
+
+function fmtDate(d){if(!d)return'—';const p=d.split('-');return`${p[2]}/${p[1]}/${p[0]}`}
+function fmtDateTime(ts){if(!ts)return'—';return new Date(ts).toLocaleString('en-AU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}
+function fmtLen(mm){if(!mm&&mm!==0)return'—';return(mm/1000).toFixed(3).replace(/\.?0+$/,'')+'m'}
+
+async function init() {
+  const params = new URLSearchParams(window.location.search);
+  const token  = params.get('token');
+
+  if (!token) { showError('No run token', 'This link is missing a run token. Scan the QR code on your run sheet again.'); return; }
+
+  // Validate token
+  const { data: tokenData, error: tokenErr } = await sb
+    .from('run_tokens')
+    .select('run_id, expires_at, used_count')
+    .eq('token', token)
+    .single();
+
+  if (tokenErr || !tokenData) { showError('Invalid link', 'This QR code is not valid. Ask your planner to regenerate the run QR code.'); return; }
+  if (new Date(tokenData.expires_at) < new Date()) { showError('Link expired', 'This QR code has expired (48 hours). Ask your planner to generate a new one.'); return; }
+
+  // Increment used count
+  await sb.from('run_tokens').update({ used_count: (tokenData.used_count || 0) + 1 }).eq('token', token);
+
+  // Load run
+  const { data: run, error: runErr } = await sb
+    .from('runs')
+    .select(`
+      *,
+      vehicles(name,type,max_length_mm),
+      driver:staff!runs_driver_id_fkey(name,phone),
+      run_jobs(id,stop_order,job_id,jobs(id,invoice_number,customer_name,customer_phone,customer_email,address_raw,suburb_raw,postcode,status,type,locked,max_item_length_mm,po_number,supplier_name,supplier_address,notes,delivered_at,job_items(*)))
+    `)
+    .eq('id', tokenData.run_id)
+    .single();
+
+  if (runErr || !run) { showError('Run not found', 'Could not load the run data. Please try again.'); return; }
+
+  runData = run;
+  stops = (run.run_jobs || []).sort((a,b) => a.stop_order - b.stop_order);
+
+  render();
+}
+
+function render() {
+  const jobs = stops.map(s => s.jobs).filter(Boolean);
+  const delivered = jobs.filter(j => j.status === 'delivered').length;
+  const total = jobs.length;
+  const allDone = delivered === total && total > 0;
+  const pct = total ? Math.round(delivered / total * 100) : 0;
+
+  const isSat = new Date(runData.date + 'T00:00:00').getDay() === 6;
+
+  let html = `
+  <div class="run-header">
+    <div class="header-brand">NO.1 DELIVERY · PRESTONS</div>
+    <div class="header-title">${runData.slot} Run — ${runData.vehicles?.name || 'Vehicle TBA'}</div>
+    <div class="header-sub">
+      ${fmtDate(runData.date)}${isSat?' · Saturday':''}
+      &nbsp;·&nbsp; Driver: ${runData.driver?.name || 'TBA'}
+      &nbsp;·&nbsp; ${total} stop${total!==1?'s':''}
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:5px">${delivered} of ${total} delivered</div>
+  </div>
+  <div class="stops">`;
+
+  if (allDone) {
+    html += `
+    <div class="complete-banner">
+      <div class="complete-icon">🎉</div>
+      <div class="complete-title">Run complete!</div>
+      <div class="complete-sub">All ${total} stops delivered. Great work.</div>
+    </div>`;
+  }
+
+  stops.forEach((s, i) => {
+    const j = s.jobs;
+    if (!j) return;
+    html += renderStop(j, i + 1, s.id, allDone);
+  });
+
+  html += '</div>';
+  document.getElementById('app').innerHTML = html;
+}
+
+function renderStop(j, num, runJobId, allDone) {
+  const isDone = j.status === 'delivered' || j.locked;
+  const isNext = !allDone && !isDone && stops.filter(s=>s.jobs&&s.jobs.status!=='delivered').findIndex(s=>s.jobs?.id===j.id)===0;
+  const items = j.job_items || [];
+
+  if (isDone) {
+    return `
+    <div class="delivered-row">
+      <div class="delivered-check">✓</div>
+      <div class="delivered-info">
+        <div class="delivered-name">Stop ${num} — ${j.customer_name}</div>
+        <div class="delivered-time">${j.invoice_number} · Delivered ${fmtDateTime(j.delivered_at)}</div>
+      </div>
+    </div>`;
+  }
+
+  const numCls = j.type==='priority'?'priority':j.type==='recovery'?'recovery':'';
+  const typeTagHTML = j.type==='priority'?'<span class="tag tag-priority">⚡ Priority 7am</span>':j.type==='recovery'?'<span class="tag tag-recovery">🔴 Recovery</span>':j.type==='shed'?'<span class="tag tag-shed">🏠 Shed</span>':'';
+  const statusS = JOB_STATUSES[j.status]||{label:j.status,color:'#a3a4a4',bg:'#f0f4f8'};
+
+  return `
+  <div class="stop-card ${isNext?'active-stop':''}" id="stop-${j.id}">
+    <div class="stop-top">
+      <div class="stop-num-row">
+        <div class="stop-num ${numCls}">${num}</div>
+        <div>
+          <div class="stop-label">Stop ${num} of ${stops.length}</div>
+          <span class="status-pill" style="background:${statusS.bg};color:${statusS.color}">${statusS.label}</span>
+          ${typeTagHTML}
+        </div>
+      </div>
+      <div class="stop-invoice">${j.invoice_number}</div>
+      <div class="stop-customer">${j.customer_name}</div>
+      ${j.customer_phone?`<div style="margin-top:6px"><a href="tel:${j.customer_phone.replace(/\s/g,'')}" style="display:inline-flex;align-items:center;gap:5px;background:var(--green-bg);border:0.5px solid var(--green-border);border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--green);text-decoration:none">📞 ${j.customer_phone}</a></div>`:''}
+      <div class="stop-address">${j.address_raw || j.suburb_raw || 'No address entered'}</div>
+      ${items.length?`<div class="stop-items">${items.map(i=>`<strong style="color:var(--text);font-family:var(--mono)">${i.quantity}×${fmtLen(i.length_mm)}</strong> ${i.product_name}`).join('<br>')}</div>`:''}
+      ${j.max_item_length_mm>6000?'<div style="margin-top:6px"><span class="tag" style="background:var(--red-bg);color:var(--red);border-color:var(--red-border);font-size:10px">⚠ 9m truck required</span></div>':''}
+      ${j.po_number?`<div style="margin-top:8px;padding:8px 10px;background:var(--teal-bg);border-radius:var(--radius);border:0.5px solid var(--teal-border)">
+        <div style="font-size:11px;font-weight:700;color:var(--teal)">📦 PO: ${j.po_number}</div>
+        ${j.supplier_name?`<div style="font-size:11px;color:var(--teal);opacity:.8">${j.supplier_name}${j.supplier_address?' · '+j.supplier_address:''}</div>`:''}
+      </div>`:''}
+      ${j.notes?`<div style="font-size:12px;color:var(--text3);margin-top:6px;font-style:italic;padding:6px 10px;background:var(--bg);border-radius:var(--radius)">📝 ${j.notes}</div>`:''}
+    </div>
+
+    ${j.status !== 'arrived' ? `
+    <div class="stop-actions">
+      ${j.address_raw?`<a class="action-btn btn-maps" href="https://maps.google.com/?q=${encodeURIComponent(j.address_raw)}" target="_blank">📍 Maps</a>`:''}
+      ${j.customer_phone?`<a class="action-btn btn-call" href="tel:${j.customer_phone.replace(/\s/g,'')}">📞 Call</a>`:''}
+      ${j.status!=='delivered'?`<button class="action-btn btn-arrived" onclick="markArrived('${j.id}')">✓ Arrived</button>`:''}
+    </div>` : ''}
+
+    ${j.status === 'arrived' ? `
+    <div class="photo-section">
+      <div class="photo-required-label">📸 Delivery photo required</div>
+      <div class="photo-drop" onclick="document.getElementById('photo-${j.id}').click()">
+        <input type="file" id="photo-${j.id}" accept="image/*" capture="environment" onchange="photoSelected('${j.id}',this)">
+        <div style="font-size:28px;margin-bottom:6px">📷</div>
+        <div style="font-size:13px;font-weight:500;color:var(--text2)">Tap to take photo</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">Required before marking delivered</div>
+      </div>
+      <div id="photo-preview-${j.id}" style="display:none"></div>
+    </div>
+    <div class="stop-actions">
+      ${j.address_raw?`<a class="action-btn btn-maps" href="https://maps.google.com/?q=${encodeURIComponent(j.address_raw)}" target="_blank">📍 Maps</a>`:''}
+      ${j.customer_phone?`<a class="action-btn btn-call" href="tel:${j.customer_phone.replace(/\s/g,'')}">📞 Call</a>`:''}
+      <button class="action-btn btn-deliver" id="deliver-btn-${j.id}" onclick="markDelivered('${j.id}')" disabled style="margin-top:8px">
+        📦 Mark delivered
+      </button>
+    </div>` : ''}
+  </div>`;
+}
+
+async function markArrived(jobId) {
+  const btn = document.querySelector(`#stop-${jobId} .btn-arrived`);
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  await sb.from('jobs').update({ status:'arrived', arrived_at: new Date().toISOString() }).eq('id', jobId);
+  await sb.from('job_log').insert({ job_id: jobId, action: 'Driver arrived — via QR', performed_by_name: runData.driver?.name || 'Driver' });
+  await reloadStop(jobId);
+}
+
+function photoSelected(jobId, input) {
+  const file = input.files[0];
+  if (!file) return;
+  photoFiles[jobId] = file;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('photo-preview-' + jobId);
+    preview.style.display = 'flex';
+    preview.innerHTML = `
+      <div class="photo-preview">
+        <img src="${e.target.result}" class="photo-preview-thumb" alt="Preview">
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:600;color:var(--green)">Photo ready to upload</div>
+          <div style="font-size:11px;color:var(--green);opacity:.8;margin-top:2px">${file.name}</div>
+        </div>
+      </div>`;
+    const deliverBtn = document.getElementById('deliver-btn-' + jobId);
+    if (deliverBtn) { deliverBtn.disabled = false; deliverBtn.textContent = '📦 Mark delivered'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function markDelivered(jobId) {
+  const file = photoFiles[jobId];
+  if (!file) { alert('Please take a photo first'); return; }
+
+  const btn = document.getElementById('deliver-btn-' + jobId);
+  if (btn) { btn.disabled = true; btn.textContent = 'Uploading photo...'; }
+
+  try {
+    // Upload photo to Supabase Storage
+    const path = `deliveries/${jobId}/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await sb.storage.from('job-photos').upload(path, file, { upsert: true });
+    if (uploadError) throw uploadError;
+
+    // Save photo record
+    await sb.from('photos').insert({
+      job_id: jobId,
+      stage: 'delivery',
+      storage_path: path,
+      file_name: file.name,
+      uploaded_by_name: runData.driver?.name || 'Driver',
+    });
+
+    // Mark job delivered and lock
+    await sb.from('jobs').update({
+      status: 'delivered',
+      locked: true,
+      delivered_at: new Date().toISOString(),
+    }).eq('id', jobId);
+
+    await sb.from('job_log').insert({
+      job_id: jobId,
+      action: 'Delivered — photo uploaded — job locked',
+      performed_by_name: runData.driver?.name || 'Driver',
+    });
+
+    delete photoFiles[jobId];
+    await reloadRun();
+
+  } catch(err) {
+    console.error(err);
+    if (btn) { btn.disabled = false; btn.textContent = '📦 Mark delivered'; }
+    alert('Upload failed. Please check your connection and try again.');
+  }
+}
+
+async function reloadStop(jobId) {
+  const { data } = await sb.from('jobs').select('*,job_items(*)').eq('id', jobId).single();
+  if (!data) return;
+  const stopIdx = stops.findIndex(s => s.job_id === jobId);
+  if (stopIdx !== -1) stops[stopIdx].jobs = data;
+  render();
+}
+
+async function reloadRun() {
+  const { data: run } = await sb.from('runs')
+    .select('*,vehicles(name,type,max_length_mm),driver:staff!runs_driver_id_fkey(name,phone),run_jobs(id,stop_order,job_id,jobs(id,invoice_number,customer_name,customer_phone,address_raw,suburb_raw,status,type,locked,max_item_length_mm,po_number,supplier_name,supplier_address,notes,delivered_at,job_items(*)))')
+    .eq('id', runData.id).single();
+  if (!run) return;
+  runData = run;
+  stops = (run.run_jobs || []).sort((a,b) => a.stop_order - b.stop_order);
+  render();
+}
+
+function showError(title, msg) {
+  document.getElementById('app').innerHTML = `
+  <div style="background:var(--brand);padding:20px 16px">
+    <div style="font-size:13px;font-weight:700;color:#fff">NO.1 DELIVERY</div>
+  </div>
+  <div class="error-screen">
+    <div class="error-icon">⚠️</div>
+    <div class="error-title">${title}</div>
+    <div class="error-sub">${msg}</div>
+  </div>`;
+}
+
+init();
+</script>
+</body>
+</html>
