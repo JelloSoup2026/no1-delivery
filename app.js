@@ -203,6 +203,9 @@ function renderTopbar(activePage = '') {
       ` : ''}
     </div>` : ''}
     <div class="topbar-right">
+      <a href="notifications.html" style="display:flex;align-items:center;gap:4px;color:rgba(255,255,255,.75);font-size:13px;text-decoration:none;padding:5px 8px;border-radius:6px;transition:background .15s" onmouseover="this.style.background='rgba(255,255,255,.15)'" onmouseout="this.style.background='transparent'">
+        🔔 <span class="nav-badge" id="notif-badge" style="display:none"></span>
+      </a>
       <div class="topbar-staff">
         <div class="topbar-staff-name">${name}</div>
         <div class="topbar-staff-role">${ROLES[role]?.label || role}</div>
@@ -229,6 +232,14 @@ async function loadJobsBadge() {
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending');
     if (count > 0) { rb.textContent = count; rb.style.display = 'inline-flex'; }
+  }
+  const nb = document.getElementById('notif-badge');
+  if (nb && App.staffId) {
+    const { count } = await sb.from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipient_id', App.staffId)
+      .eq('read', false);
+    if (count > 0) { nb.textContent = count; nb.style.display = 'inline-flex'; }
   }
 }
 
@@ -484,6 +495,55 @@ function canReopenJobs() {
 // Check if role is admin or manager
 function isAdminOrManager() {
   return ['super_admin', 'branch_manager'].includes(App.role);
+}
+
+// ---- PUSH NOTIFICATIONS ----
+
+// Register service worker
+async function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return null;
+  try {
+    const reg = await navigator.serviceWorker.register('/no1-delivery/sw.js', { scope: '/no1-delivery/' });
+    return reg;
+  } catch(err) {
+    console.warn('Service worker registration failed:', err);
+    return null;
+  }
+}
+
+// Request push permission and register
+async function enablePushNotifications() {
+  if (!('Notification' in window)) {
+    showToast('Push notifications not supported in this browser', 'error');
+    return false;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') {
+    showToast('Notifications blocked — enable in browser settings', 'error');
+    return false;
+  }
+  await registerServiceWorker();
+  showToast('Push notifications enabled ✓');
+  // Store preference
+  localStorage.setItem('push-enabled', 'true');
+  return true;
+}
+
+// Show a local push notification (works when tab is open)
+function sendLocalNotification(title, body, url) {
+  if (Notification.permission !== 'granted') return;
+  const n = new Notification(title, {
+    body,
+    icon: '/no1-delivery/icon-192.png',
+    tag: 'no1-delivery-' + Date.now(),
+  });
+  if (url) n.onclick = () => { window.focus(); window.location.href = url; };
+  setTimeout(() => n.close(), 8000);
+}
+
+// Auto-register service worker on load if previously enabled
+if (localStorage.getItem('push-enabled') === 'true') {
+  registerServiceWorker();
 }
 
 // ---- AUTO INIT ----

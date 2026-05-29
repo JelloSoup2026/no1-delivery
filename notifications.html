@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.1 Delivery — Notifications</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+.notif-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:8px;cursor:pointer;transition:all .15s}
+.notif-card:hover{border-color:var(--border2)}
+.notif-card.unread{border-left:3px solid var(--brand)}
+.notif-row{display:flex;gap:12px;padding:14px 16px;align-items:flex-start}
+.notif-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--brand);flex-shrink:0;margin-top:6px}
+.notif-dot.read{background:transparent;border:1.5px solid var(--border)}
+.notif-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.3}
+.notif-title.read{font-weight:400;color:var(--text2)}
+.notif-msg{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.4}
+.notif-time{font-size:10px;color:var(--text3);margin-top:4px;font-family:var(--mono)}
+.notif-type-badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;margin-bottom:4px}
+.filter-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.filter-tab{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:0.5px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s}
+.filter-tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.push-prompt{background:var(--surface);border:0.5px solid var(--brand-pale);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px;display:flex;align-items:center;gap:14px}
+.push-prompt-icon{font-size:28px;flex-shrink:0}
+</style>
+</head>
+<body>
+<div id="topbar"></div>
+<div class="page-wrap">
+
+  <div class="section-header" style="margin-bottom:16px">
+    <div>
+      <div class="section-title">Notifications</div>
+      <div class="section-sub" id="notif-sub">Loading...</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" onclick="markAllRead()">Mark all read</button>
+      <button class="btn btn-ghost" onclick="clearRead()">Clear read</button>
+    </div>
+  </div>
+
+  <!-- PUSH PROMPT -->
+  <div class="push-prompt" id="push-prompt" style="display:none">
+    <div class="push-prompt-icon">🔔</div>
+    <div style="flex:1">
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px">Enable push notifications</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.5">Get instant alerts when delivery requests come in, jobs are reopened, or runs depart.</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="requestPushPermission()">Enable</button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('push-prompt').style.display='none'">Later</button>
+  </div>
+
+  <!-- FILTER TABS -->
+  <div class="filter-tabs">
+    <button class="filter-tab active" onclick="setFilter('all',this)">All</button>
+    <button class="filter-tab" onclick="setFilter('unread',this)">Unread</button>
+    <button class="filter-tab" onclick="setFilter('request_received',this)">Requests</button>
+    <button class="filter-tab" onclick="setFilter('job_reopened',this)">Reopened jobs</button>
+    <button class="filter-tab" onclick="setFilter('delivery_complete',this)">Deliveries</button>
+  </div>
+
+  <div id="notif-list">
+    <div class="loading-wrap"><div class="spinner spinner-lg"></div></div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+let allNotifs = [];
+let currentFilter = 'all';
+
+const NOTIF_CONFIG = {
+  request_received:  { icon:'📋', color:'var(--brand)',   bg:'rgba(0,71,159,.08)',  label:'New request' },
+  request_approved:  { icon:'✅', color:'var(--green)',   bg:'var(--green-bg)',     label:'Approved' },
+  request_declined:  { icon:'❌', color:'var(--red)',     bg:'var(--red-bg)',       label:'Declined' },
+  job_reopened:      { icon:'🔓', color:'var(--amber)',   bg:'var(--amber-bg)',     label:'Job reopened' },
+  run_departed:      { icon:'🚛', color:'var(--brand)',   bg:'rgba(0,71,159,.08)', label:'Run departed' },
+  delivery_complete: { icon:'✓',  color:'var(--green)',   bg:'var(--green-bg)',     label:'Delivered' },
+  damage_reported:   { icon:'⚠️', color:'var(--red)',     bg:'var(--red-bg)',       label:'Damage report' },
+  vehicle_available: { icon:'🚛', color:'var(--teal)',    bg:'var(--teal-bg)',      label:'Vehicle free' },
+  daily_summary:     { icon:'📊', color:'var(--brand)',   bg:'rgba(0,71,159,.08)', label:'Daily summary' },
+};
+
+async function init() {
+  const ok = await initApp(['super_admin','branch_manager','planner']);
+  if (!ok) return;
+  renderTopbar('notifications');
+  checkPushPermission();
+  await loadNotifications();
+  subscribeToNotifications();
+}
+
+async function loadNotifications() {
+  const { data } = await sb.from('notifications')
+    .select('*')
+    .eq('recipient_id', App.staffId)
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  allNotifs = data || [];
+  updateSub();
+  renderNotifications();
+}
+
+function updateSub() {
+  const unread = allNotifs.filter(n => !n.read).length;
+  document.getElementById('notif-sub').textContent =
+    `${allNotifs.length} total · ${unread} unread`;
+}
+
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderNotifications();
+}
+
+function renderNotifications() {
+  const el = document.getElementById('notif-list');
+  let notifs = [...allNotifs];
+
+  if (currentFilter === 'unread') notifs = notifs.filter(n => !n.read);
+  else if (currentFilter !== 'all') notifs = notifs.filter(n => n.type === currentFilter);
+
+  if (!notifs.length) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">🔔</div>
+      <div class="empty-state-title">No notifications</div>
+      <div class="empty-state-desc">${currentFilter === 'unread' ? 'All caught up!' : 'Nothing here yet.'}</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = notifs.map(n => {
+    const cfg = NOTIF_CONFIG[n.type] || { icon:'📌', color:'var(--text2)', bg:'var(--bg)', label:n.type };
+    return `
+    <div class="notif-card ${n.read?'':'unread'}" onclick="markRead('${n.id}')">
+      <div class="notif-row">
+        <div class="notif-dot ${n.read?'read':''}"></div>
+        <div class="notif-icon" style="background:${cfg.bg}">${cfg.icon}</div>
+        <div style="flex:1;min-width:0">
+          <span class="notif-type-badge" style="background:${cfg.bg};color:${cfg.color}">${cfg.label}</span>
+          <div class="notif-title ${n.read?'read':''}">${n.title}</div>
+          ${n.message?`<div class="notif-msg">${n.message}</div>`:''}
+          <div class="notif-time">${fmtDateTime(n.created_at)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function markRead(id) {
+  await sb.from('notifications').update({ read: true }).eq('id', id);
+  const n = allNotifs.find(x => x.id === id);
+  if (n) n.read = true;
+  updateSub();
+  renderNotifications();
+}
+
+async function markAllRead() {
+  await sb.from('notifications')
+    .update({ read: true })
+    .eq('recipient_id', App.staffId)
+    .eq('read', false);
+  allNotifs.forEach(n => n.read = true);
+  updateSub();
+  renderNotifications();
+  showToast('All notifications marked as read');
+}
+
+async function clearRead() {
+  if (!confirm('Delete all read notifications?')) return;
+  await sb.from('notifications')
+    .delete()
+    .eq('recipient_id', App.staffId)
+    .eq('read', true);
+  allNotifs = allNotifs.filter(n => !n.read);
+  updateSub();
+  renderNotifications();
+  showToast('Read notifications cleared');
+}
+
+// Real-time subscription — new notifications appear instantly
+function subscribeToNotifications() {
+  sb.channel('notifications')
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'notifications',
+      filter: `recipient_id=eq.${App.staffId}`,
+    }, payload => {
+      allNotifs.unshift(payload.new);
+      updateSub();
+      renderNotifications();
+      // Fire local push notification
+      sendLocalNotification(
+        payload.new.title,
+        payload.new.message || '',
+        '/no1-delivery/notifications.html'
+      );
+    })
+    .subscribe();
+}
+
+// ---- PUSH NOTIFICATIONS ----
+function checkPushPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    document.getElementById('push-prompt').style.display = 'flex';
+  }
+}
+
+async function requestPushPermission() {
+  await enablePushNotifications();
+  document.getElementById('push-prompt').style.display = 'none';
+}
+
+init();
+</script>
+</body>
+</html>
