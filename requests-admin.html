@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.1 Delivery — Request Approvals</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+.request-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:10px}
+.request-card.priority{border-left:3px solid var(--amber-border)}
+.request-card.recovery{border-left:3px solid var(--red-border)}
+.filter-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.filter-tab{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:0.5px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s}
+.filter-tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.pill-pending{background:var(--amber-bg);color:var(--amber)}
+.pill-approved{background:var(--green-bg);color:var(--green)}
+.pill-declined{background:var(--red-bg);color:var(--red)}
+.approve-btn{background:var(--green-bg);color:var(--green);border:0.5px solid var(--green-border);border-radius:var(--radius);padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s}
+.approve-btn:hover{background:rgba(26,122,74,.2)}
+.decline-btn{background:var(--red-bg);color:var(--red);border:0.5px solid var(--red-border);border-radius:var(--radius);padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s}
+.decline-btn:hover{background:rgba(185,28,28,.15)}
+.badge{display:inline-flex;align-items:center;justify-content:center;background:var(--red);color:#fff;border-radius:20px;min-width:20px;height:20px;font-size:11px;font-weight:700;padding:0 6px;margin-left:6px}
+</style>
+</head>
+<body>
+<div id="topbar"></div>
+<div class="page-wrap">
+
+  <div class="section-header" style="margin-bottom:16px">
+    <div>
+      <div class="section-title">Branch Requests <span class="badge" id="pending-badge" style="display:none"></span></div>
+      <div class="section-sub" id="requests-sub">Loading...</div>
+    </div>
+    <button class="btn btn-ghost" onclick="loadRequests()">↺ Refresh</button>
+  </div>
+
+  <div class="filter-tabs">
+    <button class="filter-tab active" onclick="setFilter('pending',this)">Pending</button>
+    <button class="filter-tab" onclick="setFilter('approved',this)">Approved</button>
+    <button class="filter-tab" onclick="setFilter('declined',this)">Declined</button>
+    <button class="filter-tab" onclick="setFilter('all',this)">All</button>
+  </div>
+
+  <div id="requests-list">
+    <div class="loading-wrap"><div class="spinner spinner-lg"></div></div>
+  </div>
+
+</div>
+
+<!-- DECLINE MODAL -->
+<div id="modal-decline" class="modal-overlay" style="display:none" onclick="closeModal('modal-decline',event)">
+<div class="modal" style="max-width:420px" onclick="event.stopPropagation()">
+  <div class="modal-header">
+    <div class="modal-title">Decline request</div>
+    <button class="modal-close" onclick="closeModal('modal-decline')">&times;</button>
+  </div>
+  <input type="hidden" id="decline-id">
+  <div id="decline-info" style="background:var(--bg);border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;font-size:13px;color:var(--text2)"></div>
+  <div class="form-group" style="margin-bottom:14px">
+    <div class="form-label">Reason for declining</div>
+    <textarea class="form-textarea" id="decline-reason" placeholder="e.g. No capacity on this date, vehicle not available..."></textarea>
+  </div>
+  <div class="divider"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn btn-ghost" onclick="closeModal('modal-decline')">Cancel</button>
+    <button class="btn btn-danger" onclick="confirmDecline()">Decline request</button>
+  </div>
+</div>
+</div>
+
+<!-- APPROVE MODAL -->
+<div id="modal-approve" class="modal-overlay" style="display:none" onclick="closeModal('modal-approve',event)">
+<div class="modal" style="max-width:480px" onclick="event.stopPropagation()">
+  <div class="modal-header">
+    <div class="modal-title">Approve request</div>
+    <button class="modal-close" onclick="closeModal('modal-approve')">&times;</button>
+  </div>
+  <input type="hidden" id="approve-id">
+  <div id="approve-info" style="background:var(--bg);border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;font-size:13px;color:var(--text2)"></div>
+  <div class="form-row" style="margin-bottom:14px">
+    <div class="form-group">
+      <div class="form-label">Confirmed delivery date</div>
+      <input class="form-input" type="date" id="approve-date">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Run slot</div>
+      <select class="form-select" id="approve-slot">
+        <option value="unassigned">Unassigned</option>
+        <option value="1st">1st Run</option>
+        <option value="2nd">2nd Run</option>
+        <option value="3rd">3rd Run</option>
+        <option value="4th">4th Run</option>
+        <option value="5th">5th Run</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group" style="margin-bottom:14px">
+    <div class="form-label">Invoice number</div>
+    <input class="form-input mono" id="approve-invoice" placeholder="INV-0001" style="font-weight:700;color:var(--brand)">
+  </div>
+  <div class="divider"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn btn-ghost" onclick="closeModal('modal-approve')">Cancel</button>
+    <button class="btn btn-green" onclick="confirmApprove()">✓ Approve & create job</button>
+  </div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+let allRequests = [];
+let currentFilter = 'pending';
+
+async function init() {
+  const ok = await initApp(['super_admin','branch_manager','planner']);
+  if (!ok) return;
+  renderTopbar('requests');
+  await loadRequests();
+}
+
+async function loadRequests() {
+  const { data } = await sb.from('branch_requests')
+    .select('*, branches:from_branch_id(name), submitted_staff:submitted_by(name), jobs(invoice_number,status)')
+    .order('created_at', { ascending: false });
+
+  allRequests = data || [];
+  const pending = allRequests.filter(r => r.status === 'pending').length;
+  const badge = document.getElementById('pending-badge');
+  badge.textContent = pending;
+  badge.style.display = pending ? 'inline-flex' : 'none';
+  document.getElementById('requests-sub').textContent =
+    `${allRequests.length} total · ${pending} pending approval`;
+  renderRequests();
+}
+
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderRequests();
+}
+
+function renderRequests() {
+  const el = document.getElementById('requests-list');
+  let requests = [...allRequests];
+  if (currentFilter !== 'all') requests = requests.filter(r => r.status === currentFilter);
+
+  if (!requests.length) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">📋</div>
+      <div class="empty-state-title">No ${currentFilter} requests</div>
+    </div>`;
+    return;
+  }
+
+  const typeIcons = { standard:'📦', priority:'⚡', recovery:'🔴', shed:'🏠' };
+  const statusConfig = {
+    pending:  { cls:'pill-pending',  label:'Pending' },
+    approved: { cls:'pill-approved', label:'Approved ✓' },
+    declined: { cls:'pill-declined', label:'Declined' },
+    cancelled:{ cls:'pill-declined', label:'Cancelled' },
+  };
+
+  el.innerHTML = requests.map(r => {
+    const sc = statusConfig[r.status] || { cls:'pill-pending', label:r.status };
+    const isPriority = r.type === 'priority' || r.type === 'recovery';
+    return `
+    <div class="request-card ${r.type}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-size:12px;font-weight:700;color:var(--brand)">${r.branches?.name||'Unknown branch'}</span>
+            <span class="status-pill ${sc.cls}">${sc.label}</span>
+            <span style="font-size:11px;color:var(--text3)">${typeIcons[r.type]||''} ${r.type}</span>
+          </div>
+          <div style="font-size:15px;font-weight:700;color:var(--text)">${r.customer_name}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${r.suburb||''}${r.address_raw?' — '+r.address_raw:''}</div>
+          ${r.customer_phone?`<div style="font-size:12px;color:var(--text2);margin-top:2px">📞 ${r.customer_phone}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          ${r.requested_date?`<span style="font-size:12px;font-weight:600;color:var(--text)">📅 ${fmtDate(r.requested_date)}</span>`:''}
+          <span style="font-size:10px;color:var(--text3)">${fmtDateTime(r.created_at)}</span>
+          <span style="font-size:11px;color:var(--text3)">By: ${r.submitted_staff?.name||r.submitted_by_name||'?'}</span>
+        </div>
+      </div>
+      ${r.notes?`<div style="font-size:12px;color:var(--text3);font-style:italic;margin-bottom:8px">📝 ${r.notes}</div>`:''}
+      ${r.jobs?`<div style="font-size:12px;color:var(--green);font-weight:500;margin-bottom:8px">✓ Job: ${r.jobs.invoice_number} · ${JOB_STATUSES[r.jobs.status]?.label||r.jobs.status}</div>`:''}
+      ${r.decline_reason?`<div style="font-size:12px;color:var(--red);margin-bottom:8px">Declined: ${r.decline_reason}</div>`:''}
+      ${r.status==='pending'?`
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="approve-btn" onclick="openApproveModal('${r.id}')">✓ Approve</button>
+        <button class="decline-btn" onclick="openDeclineModal('${r.id}')">✗ Decline</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openApproveModal(id) {
+  const r = allRequests.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('approve-id').value = id;
+  document.getElementById('approve-date').value = r.requested_date || todayStr();
+  document.getElementById('approve-slot').value = 'unassigned';
+  document.getElementById('approve-invoice').value = '';
+  document.getElementById('approve-info').innerHTML =
+    `<strong>${r.customer_name}</strong> — ${r.type} request<br>${r.suburb||''} · Requested: ${fmtDate(r.requested_date||'')}`;
+  document.getElementById('modal-approve').style.display = 'flex';
+}
+
+async function confirmApprove() {
+  const id = document.getElementById('approve-id').value;
+  const r  = allRequests.find(x => x.id === id);
+  if (!r) return;
+
+  const date    = document.getElementById('approve-date').value;
+  const slot    = document.getElementById('approve-slot').value;
+  const invoice = document.getElementById('approve-invoice').value.trim() ||
+    `REQ-${id.slice(0,8).toUpperCase()}`;
+
+  // Create job
+  const { data: job, error } = await sb.from('jobs').insert({
+    branch_id:        r.from_branch_id,
+    invoice_number:   invoice,
+    type:             r.type,
+    status:           'unpicked',
+    customer_name:    r.customer_name,
+    customer_phone:   r.customer_phone,
+    customer_email:   r.customer_email,
+    address_raw:      r.address_raw,
+    suburb_raw:       r.suburb,
+    postcode:         r.postcode,
+    region:           r.region,
+    delivery_date:    date,
+    run_slot:         slot,
+    notes:            r.notes,
+    entered_by:       App.staffId,
+  }).select().single();
+
+  if (error) { showToast('Could not create job: ' + error.message, 'error'); return; }
+
+  // Update request
+  await sb.from('branch_requests').update({
+    status:      'approved',
+    reviewed_by: App.staffId,
+    reviewed_at: new Date().toISOString(),
+    job_id:      job.id,
+  }).eq('id', id);
+
+  // Notify branch
+  await sb.from('notifications').insert({
+    branch_id: r.from_branch_id,
+    type:      'request_approved',
+    title:     `Delivery request approved`,
+    message:   `${r.customer_name} · ${fmtDate(date)} · ${invoice}`,
+  });
+
+  closeModal('modal-approve');
+  showToast('Request approved — job created ✓');
+  await loadRequests();
+}
+
+function openDeclineModal(id) {
+  const r = allRequests.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('decline-id').value = id;
+  document.getElementById('decline-reason').value = '';
+  document.getElementById('decline-info').innerHTML =
+    `<strong>${r.customer_name}</strong> — ${r.type} from ${r.branches?.name||'branch'}`;
+  document.getElementById('modal-decline').style.display = 'flex';
+}
+
+async function confirmDecline() {
+  const id     = document.getElementById('decline-id').value;
+  const reason = document.getElementById('decline-reason').value.trim();
+  const r      = allRequests.find(x => x.id === id);
+  if (!id) return;
+
+  await sb.from('branch_requests').update({
+    status:         'declined',
+    reviewed_by:    App.staffId,
+    reviewed_at:    new Date().toISOString(),
+    decline_reason: reason || null,
+  }).eq('id', id);
+
+  // Notify branch
+  await sb.from('notifications').insert({
+    branch_id: r?.from_branch_id,
+    type:      'request_declined',
+    title:     `Delivery request declined`,
+    message:   `${r?.customer_name}${reason?' — '+reason:''}`,
+  });
+
+  closeModal('modal-decline');
+  showToast('Request declined');
+  await loadRequests();
+}
+
+init();
+</script>
+</body>
+</html>

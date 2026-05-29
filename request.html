@@ -3,48 +3,544 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>No.1 Delivery — Request</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<title>No.1 Delivery — Branch Request Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--brand:#00479f;--bg:#f0f4f8;--surface:#fff;--border:#b4cbe1;--text:#1a1a2e;--text2:#565656;--text3:#a3a4a4;--green:#1a7a4a;--green-bg:#e8f5ee;--green-border:#7ec8a0;--radius:10px;--radius-lg:16px;--font:'DM Sans',system-ui,sans-serif;}
-body{background:var(--brand);font-family:var(--font);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-.card{background:var(--surface);border-radius:var(--radius-lg);padding:32px;width:100%;max-width:400px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.icon{font-size:48px;margin-bottom:16px}
-.title{font-size:20px;font-weight:600;color:var(--text);margin-bottom:8px}
-.sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px}
-.name-badge{display:inline-block;padding:8px 20px;background:var(--green-bg);border:0.5px solid var(--green-border);border-radius:20px;font-size:13px;font-weight:600;color:var(--green);margin-bottom:20px}
-.stage-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(0,71,159,.08);color:var(--brand);border:0.5px solid #b4cbe1;margin-bottom:20px}
-.btn{width:100%;padding:12px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
-.btn:hover{background:#003a85}
-.status{padding:10px 14px;background:var(--green-bg);border:0.5px solid var(--green-border);border-radius:var(--radius);font-size:12px;color:var(--green);font-weight:500;margin-bottom:16px}
+:root{
+  --brand:#00479f;--brand-mid:#4b7fb9;--brand-light:#79a1cb;
+  --brand-pale:#b4cbe1;--brand-surface:#e5ebef;
+  --bg:#f0f4f8;--surface:#fff;--border:#b4cbe1;--border2:#79a1cb;
+  --text:#1a1a2e;--text2:#565656;--text3:#a3a4a4;
+  --green:#1a7a4a;--green-bg:#e8f5ee;--green-border:#7ec8a0;
+  --amber:#8a5a00;--amber-bg:#fef3dc;--amber-border:#f0b429;
+  --red:#b91c1c;--red-bg:#fef2f2;--red-border:#fca5a5;
+  --teal:#0e7490;--teal-bg:#ecfeff;--teal-border:#67e8f9;
+  --radius:10px;--radius-lg:16px;
+  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+}
+body{background:var(--bg);font-family:var(--font);font-size:14px;min-height:100vh;padding-bottom:40px}
+.header{background:var(--brand);padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.header-brand{display:flex;flex-direction:column}
+.brand-name{font-size:15px;font-weight:700;color:#fff}
+.brand-sub{font-size:10px;color:rgba(255,255,255,.6);margin-top:1px}
+.signout-btn{background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:500;padding:5px 12px;cursor:pointer;font-family:var(--font)}
+.content{padding:20px;max-width:900px;margin:0 auto}
+.tabs{display:flex;gap:0;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:20px}
+.tab{flex:1;padding:12px;text-align:center;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:transparent;font-family:var(--font);transition:all .15s;border-right:0.5px solid var(--border)}
+.tab:last-child{border-right:none}
+.tab.active{background:var(--brand);color:#fff}
+.tab:hover:not(.active){background:var(--bg)}
+.view{display:none}.view.active{display:block}
+
+/* SLOTS */
+.slots-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:20px}
+.slot-day{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 6px;text-align:center;cursor:pointer;transition:all .15s}
+.slot-day:hover{border-color:var(--brand)}
+.slot-day.selected{border:2px solid var(--brand);background:rgba(0,71,159,.04)}
+.slot-day.full{opacity:.5;cursor:not-allowed}
+.slot-day.today{border-color:var(--brand-mid)}
+.slot-date{font-size:11px;font-weight:700;color:var(--text);margin-bottom:3px}
+.slot-day-name{font-size:9px;color:var(--text3);letter-spacing:.3px;text-transform:uppercase;margin-bottom:6px}
+.slot-count{font-size:10px;font-weight:600;padding:2px 6px;border-radius:20px}
+.slot-available{background:var(--green-bg);color:var(--green)}
+.slot-limited{background:var(--amber-bg);color:var(--amber)}
+.slot-full{background:var(--red-bg);color:var(--red)}
+
+/* REQUEST FORM */
+.form-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px}
+.form-card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border)}
+.form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.form-label{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.4px;text-transform:uppercase}
+.form-input,.form-select,.form-textarea{border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;font-family:var(--font);font-size:14px;color:var(--text);background:var(--surface);width:100%;outline:none;transition:border .15s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--brand)}
+.form-textarea{resize:vertical;min-height:70px;line-height:1.5}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.item-row{display:grid;grid-template-columns:1fr 72px 104px 28px;gap:6px;margin-bottom:6px;align-items:center}
+.remove-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:0;line-height:1}
+.remove-btn:hover{color:var(--red)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:var(--radius);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;border:0.5px solid;transition:all .15s}
+.btn-primary{background:var(--brand);color:#fff;border-color:var(--brand)}.btn-primary:hover{background:#003a85}
+.btn-ghost{background:transparent;color:var(--text2);border-color:var(--border)}.btn-ghost:hover{border-color:var(--brand);color:var(--brand)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* REQUEST CARDS */
+.request-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px}
+.request-card.pending{border-left:3px solid var(--amber-border)}
+.request-card.approved{border-left:3px solid var(--green-border)}
+.request-card.declined{border-left:3px solid var(--red-border)}
+.status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.pill-pending{background:var(--amber-bg);color:var(--amber)}
+.pill-approved{background:var(--green-bg);color:var(--green)}
+.pill-declined{background:var(--red-bg);color:var(--red)}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(0,71,159,.2);border-top-color:var(--brand);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;gap:10px;color:var(--text2);font-size:13px}
+.alert{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:12px}
+.alert-success{background:var(--green-bg);color:var(--green);border:0.5px solid var(--green-border)}
+.alert-error{background:var(--red-bg);color:var(--red);border:0.5px solid var(--red-border)}
+.alert-info{background:rgba(0,71,159,.06);color:var(--brand);border:0.5px solid var(--brand-pale)}
+@media(max-width:600px){
+  .slots-grid{grid-template-columns:repeat(4,1fr)}
+  .form-row{grid-template-columns:1fr}
+  .item-row{grid-template-columns:1fr 64px 90px 24px}
+}
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="icon">📋</div>
-  <div class="title">Branch Request Portal</div>
-  <div class="status">✓ Login successful — routing working correctly</div>
-  <div class="name-badge" id="name-badge">Loading...</div>
-  <div class="sub">This will become the branch request portal — submit delivery requests and track their status. Coming in Stage 6.</div>
-  <div class="stage-badge">Stage 6 — Branch Requests</div>
-  <button class="btn" onclick="logout()">Sign out</button>
+
+<div class="header">
+  <div class="header-brand">
+    <div class="brand-name">No.1 Delivery</div>
+    <div class="brand-sub" id="branch-name-header">Branch Portal</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span style="font-size:12px;color:rgba(255,255,255,.7)" id="staff-name-header"></span>
+    <button class="signout-btn" onclick="signOut()">Sign out</button>
+  </div>
 </div>
+
+<div class="content">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('new',this)">+ New Request</button>
+    <button class="tab" onclick="switchTab('slots',this)">Available Slots</button>
+    <button class="tab" onclick="switchTab('history',this)">My Requests</button>
+  </div>
+
+  <!-- NEW REQUEST TAB -->
+  <div class="view active" id="view-new">
+    <div id="new-alert"></div>
+
+    <div class="form-card">
+      <div class="form-card-title">Delivery details</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <div class="form-label">Request type</div>
+          <select class="form-select" id="req-type">
+            <option value="standard">📦 Standard delivery</option>
+            <option value="priority">⚡ Priority — 7am (approval required)</option>
+            <option value="recovery">🔴 Recovery (approval required)</option>
+            <option value="shed">🏠 Shed delivery</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Requested delivery date</div>
+          <input class="form-input" type="date" id="req-date">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <div class="form-label">Customer name</div>
+          <input class="form-input" id="req-customer" placeholder="e.g. John Smith">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Customer phone</div>
+          <input class="form-input" id="req-phone" placeholder="04XX XXX XXX">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Customer email (optional)</div>
+        <input class="form-input" type="email" id="req-email" placeholder="customer@email.com">
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Delivery address</div>
+        <input class="form-input" id="req-address" placeholder="Full street address">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <div class="form-label">Suburb</div>
+          <input class="form-input" id="req-suburb" placeholder="e.g. Penrith">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Postcode</div>
+          <input class="form-input" id="req-postcode" placeholder="2750" maxlength="4">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="form-label">Region</div>
+        <select class="form-select" id="req-region">
+          <option value="sydney-metro">Sydney Metro</option>
+          <option value="regional-nsw">Regional NSW</option>
+          <option value="act">ACT</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">Order items</div>
+      <div style="display:grid;grid-template-columns:1fr 72px 104px 28px;gap:6px;margin-bottom:6px;padding:0 2px">
+        <span style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px">PRODUCT</span>
+        <span style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px">QTY</span>
+        <span style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px">LENGTH (mm)</span>
+        <span></span>
+      </div>
+      <div id="req-items"></div>
+      <div id="req-maxlen" style="font-size:12px;color:var(--text2);margin-top:6px;min-height:18px"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addReqItem()">+ Add item</button>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">Additional info</div>
+      <div class="form-group">
+        <div class="form-label">Invoice / reference number</div>
+        <input class="form-input mono" id="req-invoice" placeholder="Your invoice number" style="font-weight:600;color:var(--brand)">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Notes</div>
+        <textarea class="form-textarea" id="req-notes" placeholder="Special instructions, access info, anything the delivery team needs to know..."></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="resetForm()">Clear form</button>
+      <button class="btn btn-primary" id="submit-btn" onclick="submitRequest()">Submit delivery request</button>
+    </div>
+  </div>
+
+  <!-- SLOTS TAB -->
+  <div class="view" id="view-slots">
+    <div style="background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px">
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">Available delivery slots</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:14px">Next 14 days — tap a date to select it for your request</div>
+      <div class="slots-grid" id="slots-grid">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>Available</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:50%;background:var(--amber-border)"></div>Limited</div>
+        <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:8px;height:8px;border-radius:50%;background:var(--red)"></div>Full</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div class="view" id="view-history">
+    <div id="history-list">
+      <div class="loading"><div class="spinner"></div> Loading requests...</div>
+    </div>
+  </div>
+
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
 <script>
-const SUPABASE_URL='https://mnhwcuawsdxeyzqkjdwq.supabase.co';
-const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uaHdjdWF3c2R4ZXl6cWtqZHdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMjM1ODksImV4cCI6MjA5NTU5OTU4OX0.ALToJk7zpFYRLZPwoAN7d8EHsU6AE0wNKfNxVCoS_tk';
-const {createClient}=supabase;
-const sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-async function init(){
-  const name=sessionStorage.getItem('staff_name');
-  const role=sessionStorage.getItem('staff_role');
-  const pin=sessionStorage.getItem('pin_auth');
-  const {data:{session}}=await sb.auth.getSession();
-  if(!session&&!pin){window.location.href='login.html';return;}
-  document.getElementById('name-badge').textContent='👋 '+( name||'Staff member')+' — logged in';
+let reqItemRows = [];
+
+async function init() {
+  const ok = await initApp(['branch_requester','planner','branch_manager','super_admin']);
+  if (!ok) return;
+
+  document.getElementById('staff-name-header').textContent = App.staff?.name || '';
+  document.getElementById('branch-name-header').textContent = App.branchName || 'Branch Portal';
+  document.getElementById('req-date').value = getNextWorkday();
+
+  addReqItem();
+  await loadSlots();
 }
-async function logout(){await sb.auth.signOut();sessionStorage.clear();window.location.href='login.html';}
+
+function getNextWorkday() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  while (d.getDay() === 0) d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('view-' + tab).classList.add('active');
+  if (tab === 'history') loadHistory();
+  if (tab === 'slots') loadSlots();
+}
+
+// ---- SLOTS ----
+async function loadSlots() {
+  const el = document.getElementById('slots-grid');
+
+  // Get jobs for next 14 days to calculate slot availability
+  const from = new Date().toISOString().slice(0,10);
+  const to   = new Date(Date.now() + 14*86400000).toISOString().slice(0,10);
+
+  const { data: jobs } = await sb.from('jobs')
+    .select('delivery_date')
+    .gte('delivery_date', from)
+    .lte('delivery_date', to)
+    .neq('status', 'delivered');
+
+  const jobsByDate = {};
+  (jobs || []).forEach(j => {
+    jobsByDate[j.delivery_date] = (jobsByDate[j.delivery_date] || 0) + 1;
+  });
+
+  const MAX_PER_DAY = 20; // configurable
+  const days = [];
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date(Date.now() + i * 86400000);
+    const dateStr = d.toISOString().slice(0,10);
+    const count = jobsByDate[dateStr] || 0;
+    const remaining = MAX_PER_DAY - count;
+    const isSun = d.getDay() === 0;
+    days.push({ dateStr, date: d, count, remaining, isSun });
+  }
+
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  el.innerHTML = days.map(day => {
+    const cls = day.isSun ? 'full' : day.remaining <= 0 ? 'full' : day.remaining <= 5 ? '' : '';
+    const countCls = day.isSun ? 'slot-full' : day.remaining <= 0 ? 'slot-full' : day.remaining <= 5 ? 'slot-limited' : 'slot-available';
+    const countText = day.isSun ? 'Closed' : day.remaining <= 0 ? 'Full' : `${day.remaining} left`;
+    return `
+    <div class="slot-day ${cls}" onclick="selectSlotDate('${day.dateStr}',this)">
+      <div class="slot-day-name">${dayNames[day.date.getDay()]}</div>
+      <div class="slot-date">${day.date.getDate()}/${day.date.getMonth()+1}</div>
+      <span class="slot-count ${countCls}">${countText}</span>
+    </div>`;
+  }).join('');
+}
+
+function selectSlotDate(dateStr, el) {
+  document.querySelectorAll('.slot-day').forEach(d => d.classList.remove('selected'));
+  el.classList.add('selected');
+  // Switch to new request tab and set the date
+  document.querySelectorAll('.tab')[0].click();
+  document.getElementById('req-date').value = dateStr;
+  showAlert('new', `✓ Date set to ${fmtDate(dateStr)} — fill in the request details below.`, 'info');
+}
+
+// ---- ITEMS ----
+function addReqItem(prod='', qty=1, len='') {
+  const id = 'ri' + Date.now() + Math.random().toString(36).slice(2,5);
+  reqItemRows.push(id);
+  const d = document.createElement('div');
+  d.id = id;
+  d.className = 'item-row';
+  d.innerHTML = `
+    <input class="form-input" placeholder="e.g. Colorbond sheet" value="${prod}" style="padding:7px 10px;font-size:13px" oninput="updateReqMaxLen()">
+    <input class="form-input" type="number" min="1" value="${qty}" style="padding:7px 8px;font-size:13px;text-align:center" oninput="updateReqMaxLen()">
+    <input class="form-input mono" type="number" min="0" value="${len}" placeholder="e.g. 7800" style="padding:7px 8px;font-size:13px;font-weight:600" oninput="updateReqMaxLen()">
+    <button class="remove-btn" onclick="removeReqItem('${id}')">×</button>`;
+  document.getElementById('req-items').appendChild(d);
+  updateReqMaxLen();
+}
+
+function removeReqItem(id) {
+  document.getElementById(id)?.remove();
+  reqItemRows = reqItemRows.filter(r => r !== id);
+  updateReqMaxLen();
+}
+
+function getReqItems() {
+  return reqItemRows.map(id => {
+    const row = document.getElementById(id);
+    if (!row) return null;
+    const inputs = row.querySelectorAll('input');
+    return { product_name: inputs[0].value.trim(), quantity: parseInt(inputs[1].value)||1, length_mm: parseInt(inputs[2].value)||0 };
+  }).filter(Boolean).filter(i => i.product_name);
+}
+
+function updateReqMaxLen() {
+  const items = getReqItems();
+  const max = items.reduce((m,i) => Math.max(m, i.length_mm), 0);
+  const el = document.getElementById('req-maxlen');
+  if (!items.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `Max item length: <strong style="color:${max>6000?'var(--amber)':'var(--green)'}">${fmtLen(max)}</strong>${max>6000?' — <span style="color:var(--amber);font-weight:600">Requires 9m truck</span>':''}`;
+}
+
+function fmtLen(mm) {
+  if (!mm && mm !== 0) return '—';
+  return (mm/1000).toFixed(3).replace(/\.?0+$/,'') + 'm';
+}
+
+// ---- SUBMIT ----
+async function submitRequest() {
+  const items = getReqItems();
+  const customer = document.getElementById('req-customer').value.trim();
+  const date = document.getElementById('req-date').value;
+  const type = document.getElementById('req-type').value;
+
+  if (!customer) { showAlert('new','Customer name is required','error'); return; }
+  if (!date) { showAlert('new','Please select a delivery date','error'); return; }
+  if (!items.length) { showAlert('new','Add at least one item','error'); return; }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Submitting...';
+
+  // Standard requests auto-approved, priority/recovery need manager approval
+  const autoApprove = type === 'standard' || type === 'shed';
+  const status = autoApprove ? 'approved' : 'pending';
+
+  const reqData = {
+    from_branch_id:   App.branchId,
+    submitted_by:     App.staffId,
+    submitted_by_name: App.staff?.name,
+    type,
+    status,
+    customer_name:    customer,
+    customer_phone:   document.getElementById('req-phone').value.trim() || null,
+    customer_email:   document.getElementById('req-email').value.trim() || null,
+    address_raw:      document.getElementById('req-address').value.trim() || null,
+    suburb:           document.getElementById('req-suburb').value.trim() || null,
+    postcode:         document.getElementById('req-postcode').value.trim() || null,
+    region:           document.getElementById('req-region').value,
+    requested_date:   date,
+    notes:            document.getElementById('req-notes').value.trim() || null,
+  };
+
+  const { data: req, error } = await sb.from('branch_requests').insert(reqData).select().single();
+  if (error) {
+    showAlert('new', 'Submission failed: ' + error.message, 'error');
+    btn.disabled = false; btn.innerHTML = 'Submit delivery request';
+    return;
+  }
+
+  // If auto-approved, create the job automatically
+  if (autoApprove && req) {
+    const maxLen = items.reduce((m,i) => Math.max(m, i.length_mm), 0);
+    const { data: job } = await sb.from('jobs').insert({
+      branch_id:        App.branchId,
+      invoice_number:   document.getElementById('req-invoice').value.trim() || `REQ-${req.id.slice(0,8).toUpperCase()}`,
+      type,
+      status:           'unpicked',
+      customer_name:    customer,
+      customer_phone:   reqData.customer_phone,
+      customer_email:   reqData.customer_email,
+      address_raw:      reqData.address_raw,
+      suburb_raw:       reqData.suburb,
+      postcode:         reqData.postcode,
+      region:           reqData.region,
+      delivery_date:    date,
+      run_slot:         'unassigned',
+      notes:            reqData.notes,
+      max_item_length_mm: maxLen,
+      entered_by:       App.staffId,
+    }).select().single();
+
+    if (job) {
+      // Save items
+      await sb.from('job_items').insert(items.map(i => ({ ...i, job_id: job.id })));
+      // Link request to job
+      await sb.from('branch_requests').update({ job_id: job.id }).eq('id', req.id);
+    }
+  }
+
+  // Notify managers for priority/recovery
+  if (!autoApprove) {
+    await sb.from('notifications').insert({
+      branch_id: App.branchId,
+      type:      'request_received',
+      title:     `New ${type} request from ${App.branchName}`,
+      message:   `${customer} · ${fmtDate(date)} · submitted by ${App.staff?.name}`,
+    });
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = 'Submit delivery request';
+  resetForm();
+
+  if (autoApprove) {
+    showAlert('new', `✓ Request approved automatically and added to the delivery schedule for ${fmtDate(date)}.`, 'success');
+  } else {
+    showAlert('new', `✓ Request submitted. Your manager will review this ${type} request and notify you once approved.`, 'info');
+  }
+
+  // Switch to history after a moment
+  setTimeout(() => {
+    document.querySelectorAll('.tab')[2].click();
+  }, 2000);
+}
+
+function resetForm() {
+  reqItemRows = [];
+  document.getElementById('req-items').innerHTML = '';
+  ['req-customer','req-phone','req-email','req-address','req-suburb','req-postcode','req-notes','req-invoice'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('req-type').value = 'standard';
+  document.getElementById('req-region').value = 'sydney-metro';
+  document.getElementById('req-date').value = getNextWorkday();
+  document.getElementById('req-maxlen').innerHTML = '';
+  document.getElementById('new-alert').innerHTML = '';
+  addReqItem();
+}
+
+function showAlert(view, msg, type) {
+  const el = document.getElementById(view + '-alert');
+  if (!el) return;
+  const cls = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-error' : 'alert-info';
+  el.innerHTML = `<div class="alert ${cls}" style="margin-bottom:14px">${msg}</div>`;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ---- HISTORY ----
+async function loadHistory() {
+  const el = document.getElementById('history-list');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Loading...</div>';
+
+  const { data: requests } = await sb.from('branch_requests')
+    .select('*, jobs(invoice_number,status)')
+    .eq('from_branch_id', App.branchId)
+    .order('created_at', { ascending: false });
+
+  if (!requests || !requests.length) {
+    el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text3)">
+      <div style="font-size:32px;margin-bottom:10px">📋</div>
+      <div style="font-size:14px;font-weight:500;color:var(--text2)">No requests yet</div>
+      <div style="font-size:13px;margin-top:6px">Your submitted requests will appear here.</div>
+    </div>`;
+    return;
+  }
+
+  const statusConfig = {
+    pending:  { cls:'pill-pending',  label:'Pending approval' },
+    approved: { cls:'pill-approved', label:'Approved ✓' },
+    declined: { cls:'pill-declined', label:'Declined' },
+    cancelled:{ cls:'pill-declined', label:'Cancelled' },
+  };
+  const typeIcons = { standard:'📦', priority:'⚡', recovery:'🔴', shed:'🏠' };
+
+  el.innerHTML = requests.map(r => {
+    const sc = statusConfig[r.status] || { cls:'pill-pending', label:r.status };
+    return `
+    <div class="request-card ${r.status}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+        <div>
+          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:3px">${fmtDateTime(r.created_at)}</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text)">${r.customer_name}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${r.suburb||''}${r.address_raw?' — '+r.address_raw:''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          <span class="status-pill ${sc.cls}">${sc.label}</span>
+          <span style="font-size:11px;color:var(--text3)">${typeIcons[r.type]||''} ${r.type}</span>
+          ${r.requested_date?`<span style="font-size:11px;color:var(--text3)">${fmtDate(r.requested_date)}</span>`:''}
+        </div>
+      </div>
+      ${r.jobs?`<div style="font-size:12px;color:var(--green);font-weight:500">✓ Job created: ${r.jobs.invoice_number} · ${JOB_STATUSES[r.jobs.status]?.label||r.jobs.status}</div>`:''}
+      ${r.decline_reason?`<div style="font-size:12px;color:var(--red);margin-top:4px">Reason: ${r.decline_reason}</div>`:''}
+      ${r.notes?`<div style="font-size:11px;color:var(--text3);margin-top:6px;font-style:italic">📝 ${r.notes}</div>`:''}
+      ${r.status==='pending'?`<div style="margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="cancelRequest('${r.id}')">Cancel request</button></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function cancelRequest(id) {
+  if (!confirm('Cancel this request?')) return;
+  await sb.from('branch_requests').update({ status:'cancelled' }).eq('id', id);
+  showToast('Request cancelled');
+  loadHistory();
+}
+
 init();
 </script>
 </body>

@@ -197,6 +197,7 @@ function renderTopbar(activePage = '') {
       <a href="runs.html"      class="nav-item ${activePage==='runs'?'active':''}">Runs</a>
       <a href="calendar.html"  class="nav-item ${activePage==='calendar'?'active':''}">Calendar</a>
       ${role === 'super_admin' || role === 'branch_manager' ? `
+      <a href="requests-admin.html" class="nav-item ${activePage==='requests'?'active':''}">Requests <span class="nav-badge" id="requests-badge" style="display:none"></span></a>
       <a href="fleet.html"     class="nav-item ${activePage==='fleet'?'active':''}">Fleet</a>
       <a href="staff-mgmt.html" class="nav-item ${activePage==='staff'?'active':''}">Staff</a>
       ` : ''}
@@ -216,14 +217,18 @@ function renderTopbar(activePage = '') {
 
 async function loadJobsBadge() {
   const el = document.getElementById('jobs-badge');
-  if (!el) return;
-  const { count } = await sb
-    .from('jobs')
-    .select('id', { count: 'exact', head: true })
-    .neq('status', 'delivered');
-  if (count > 0) {
-    el.textContent = count;
-    el.style.display = 'inline-flex';
+  if (el) {
+    const { count } = await sb.from('jobs')
+      .select('id', { count: 'exact', head: true })
+      .neq('status', 'delivered');
+    if (count > 0) { el.textContent = count; el.style.display = 'inline-flex'; }
+  }
+  const rb = document.getElementById('requests-badge');
+  if (rb) {
+    const { count } = await sb.from('branch_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending');
+    if (count > 0) { rb.textContent = count; rb.style.display = 'inline-flex'; }
   }
 }
 
