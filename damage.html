@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.1 Delivery — Damage Reports</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+.damage-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:10px;transition:border .15s}
+.damage-card:hover{border-color:var(--border2)}
+.damage-card.damaged{border-left:3px solid var(--red-border)}
+.damage-card.wrong_item{border-left:3px solid var(--amber-border)}
+.damage-card.missing_item{border-left:3px solid var(--amber-border)}
+.damage-card.refused{border-left:3px solid var(--purple-border,#c4b5fd)}
+.damage-card.other{border-left:3px solid var(--border2)}
+.type-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.resolution-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.photo-thumb{width:64px;height:64px;object-fit:cover;border-radius:var(--radius);border:0.5px solid var(--border);cursor:pointer}
+.photo-thumb:hover{opacity:.85}
+.filter-bar{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+</style>
+</head>
+<body>
+<div id="topbar"></div>
+<div class="page-wrap">
+
+  <div class="section-header" style="margin-bottom:16px">
+    <div>
+      <div class="section-title">Damage Reports</div>
+      <div class="section-sub" id="damage-sub">Loading...</div>
+    </div>
+    <button class="btn btn-primary" onclick="openNewDamageModal()">+ Log Damage Report</button>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar no-print">
+    <div class="filter-group">
+      <div class="filter-label">Type</div>
+      <select class="filter-select" id="f-type" onchange="applyFilters()">
+        <option value="">All types</option>
+        <option value="damaged">Damaged</option>
+        <option value="wrong_item">Wrong item</option>
+        <option value="missing_item">Missing item</option>
+        <option value="refused">Refused</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Resolution</div>
+      <select class="filter-select" id="f-resolution" onchange="applyFilters()">
+        <option value="">All</option>
+        <option value="pending">Pending</option>
+        <option value="redelivery">Redelivery</option>
+        <option value="credit">Credit</option>
+        <option value="replacement">Replacement</option>
+        <option value="no_action">No action</option>
+      </select>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear</button>
+  </div>
+
+  <!-- DAMAGE LIST -->
+  <div id="damage-list">
+    <div class="loading-wrap"><div class="spinner spinner-lg"></div></div>
+  </div>
+
+</div>
+
+<!-- NEW DAMAGE MODAL -->
+<div id="modal-damage" class="modal-overlay" style="display:none" onclick="closeModal('modal-damage',event)">
+<div class="modal" onclick="event.stopPropagation()">
+  <div class="modal-header">
+    <div class="modal-title" id="modal-damage-title">Log Damage Report</div>
+    <button class="modal-close" onclick="closeModal('modal-damage')">&times;</button>
+  </div>
+  <input type="hidden" id="dmg-id">
+  <div style="display:flex;flex-direction:column;gap:14px">
+
+    <div class="form-group">
+      <div class="form-label">Linked invoice / job</div>
+      <input class="form-input mono" id="dmg-invoice-search" placeholder="Type invoice number to search..." oninput="searchJobs(this.value)" style="font-weight:600;color:var(--brand)">
+      <div id="dmg-job-results" style="margin-top:6px"></div>
+      <input type="hidden" id="dmg-job-id">
+    </div>
+
+    <div id="dmg-job-preview" style="display:none;background:var(--bg);border-radius:var(--radius);padding:10px 12px;font-size:13px;border:0.5px solid var(--green-border)"></div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Damage type</div>
+        <select class="form-select" id="dmg-type">
+          <option value="damaged">Damaged in transit</option>
+          <option value="wrong_item">Wrong item delivered</option>
+          <option value="missing_item">Missing item</option>
+          <option value="refused">Customer refused delivery</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Resolution</div>
+        <select class="form-select" id="dmg-resolution">
+          <option value="pending">Pending — under review</option>
+          <option value="redelivery">Redelivery required</option>
+          <option value="credit">Credit to customer</option>
+          <option value="replacement">Replacement order</option>
+          <option value="no_action">No action required</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Description</div>
+      <textarea class="form-textarea" id="dmg-description" rows="3" placeholder="Describe the damage or issue in detail..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Damage photos</div>
+      <div style="background:var(--bg);border:1.5px dashed var(--border2);border-radius:var(--radius);padding:16px;text-align:center;cursor:pointer" onclick="document.getElementById('dmg-photos').click()">
+        <input type="file" id="dmg-photos" accept="image/*" multiple style="display:none" onchange="previewDamagePhotos(this)">
+        <div style="font-size:24px;margin-bottom:6px">📷</div>
+        <div style="font-size:13px;font-weight:500;color:var(--text2)">Tap to add photos</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">Multiple photos allowed</div>
+      </div>
+      <div id="dmg-photo-previews" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Notes</div>
+      <textarea class="form-textarea" id="dmg-notes" rows="2" placeholder="Any additional notes..."></textarea>
+    </div>
+
+    <div id="redelivery-info" style="display:none;background:var(--amber-bg);border:0.5px solid var(--amber-border);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--amber)">
+      ⚡ Selecting "Redelivery required" will automatically create a Recovery job when you save this report.
+    </div>
+
+    <div class="divider"></div>
+    <div style="display:flex;gap:8px;justify-content:space-between">
+      <button class="btn btn-danger btn-sm" id="dmg-delete-btn" style="display:none" onclick="deleteDamageReport()">Delete</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-ghost" onclick="closeModal('modal-damage')">Cancel</button>
+        <button class="btn btn-primary" id="dmg-save-btn" onclick="saveDamageReport()">Save Report</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PHOTO LIGHTBOX -->
+<div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:999;display:none;align-items:center;justify-content:center" onclick="document.getElementById('lightbox').style.display='none'">
+  <img id="lightbox-img" style="max-width:90%;max-height:90%;border-radius:var(--radius-lg)">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+let allDamages = [];
+let selectedJobId = null;
+let damagePhotoFiles = [];
+
+const TYPE_CONFIG = {
+  damaged:      { label:'Damaged in transit', color:'var(--red)',   bg:'var(--red-bg)' },
+  wrong_item:   { label:'Wrong item',         color:'var(--amber)', bg:'var(--amber-bg)' },
+  missing_item: { label:'Missing item',       color:'var(--amber)', bg:'var(--amber-bg)' },
+  refused:      { label:'Refused delivery',   color:'#5b21b6',      bg:'#f5f3ff' },
+  other:        { label:'Other',              color:'var(--text2)', bg:'var(--bg)' },
+};
+const RES_CONFIG = {
+  pending:     { label:'Pending',      color:'var(--amber)', bg:'var(--amber-bg)' },
+  redelivery:  { label:'Redelivery',   color:'var(--brand)', bg:'rgba(0,71,159,.08)' },
+  credit:      { label:'Credit',       color:'var(--green)', bg:'var(--green-bg)' },
+  replacement: { label:'Replacement',  color:'var(--teal)',  bg:'var(--teal-bg)' },
+  no_action:   { label:'No action',    color:'var(--text3)', bg:'var(--bg)' },
+};
+
+async function init() {
+  const ok = await initApp(['super_admin','branch_manager','planner']);
+  if (!ok) return;
+  renderTopbar('damage');
+  await loadDamages();
+
+  // Show redelivery info when resolution changes
+  document.getElementById('dmg-resolution').addEventListener('change', function() {
+    document.getElementById('redelivery-info').style.display =
+      this.value === 'redelivery' ? 'block' : 'none';
+  });
+}
+
+async function loadDamages() {
+  const { data } = await sb.from('damage_reports')
+    .select('*, jobs(invoice_number,customer_name,suburb_raw,status), photos(storage_path,file_name,stage)')
+    .order('created_at', { ascending: false });
+
+  allDamages = data || [];
+  document.getElementById('damage-sub').textContent =
+    `${allDamages.length} report${allDamages.length!==1?'s':''} · ${allDamages.filter(d=>d.resolution==='pending').length} pending`;
+  applyFilters();
+}
+
+function applyFilters() {
+  const type = document.getElementById('f-type').value;
+  const res  = document.getElementById('f-resolution').value;
+  let damages = [...allDamages];
+  if (type) damages = damages.filter(d => d.damage_type === type);
+  if (res)  damages = damages.filter(d => d.resolution === res);
+  renderDamages(damages);
+}
+
+function clearFilters() {
+  document.getElementById('f-type').value = '';
+  document.getElementById('f-resolution').value = '';
+  applyFilters();
+}
+
+function renderDamages(damages) {
+  const el = document.getElementById('damage-list');
+  if (!damages.length) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">✅</div>
+      <div class="empty-state-title">No damage reports</div>
+      <div class="empty-state-desc">No reports match the current filters.</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = damages.map(d => {
+    const tc = TYPE_CONFIG[d.damage_type] || { label:d.damage_type, color:'var(--text2)', bg:'var(--bg)' };
+    const rc = RES_CONFIG[d.resolution]   || { label:d.resolution,  color:'var(--text2)', bg:'var(--bg)' };
+    const photos = (d.photos || []).filter(p => p.stage === 'damage');
+    return `
+    <div class="damage-card ${d.damage_type}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+        <div>
+          ${d.jobs?`<div class="invoice-num" style="font-size:12px">${d.jobs.invoice_number}</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:2px">${d.jobs.customer_name}</div>
+          <div style="font-size:12px;color:var(--text2)">${d.jobs.suburb_raw||''}</div>`:'<div style="font-size:13px;color:var(--text3)">Job not linked</div>'}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          <span class="type-badge" style="background:${tc.bg};color:${tc.color}">${tc.label}</span>
+          <span class="resolution-badge" style="background:${rc.bg};color:${rc.color}">${rc.label}</span>
+          <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${fmtDateTime(d.created_at)}</span>
+        </div>
+      </div>
+      ${d.description?`<div style="font-size:13px;color:var(--text2);margin-bottom:8px;line-height:1.5">${d.description}</div>`:''}
+      ${d.notes?`<div style="font-size:11px;color:var(--text3);font-style:italic;margin-bottom:8px">📝 ${d.notes}</div>`:''}
+      ${photos.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        ${photos.map(p=>`<img class="photo-thumb" src="${getPhotoUrl(p.storage_path)}" alt="${p.file_name||'photo'}" onclick="openLightbox('${getPhotoUrl(p.storage_path)}')">`).join('')}
+      </div>`:''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="openEditDamage('${d.id}')">Edit</button>
+        ${d.resolution==='redelivery'&&!d.recovery_job_id?`<button class="btn btn-amber btn-sm" onclick="createRecoveryJob('${d.id}')">Create recovery job</button>`:''}
+        ${d.recovery_job_id?`<span style="font-size:12px;color:var(--green);font-weight:500">✓ Recovery job created</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getPhotoUrl(path) {
+  const { data } = sb.storage.from('job-photos').getPublicUrl(path);
+  return data?.publicUrl || '';
+}
+
+function openLightbox(url) {
+  const lb = document.getElementById('lightbox');
+  document.getElementById('lightbox-img').src = url;
+  lb.style.display = 'flex';
+}
+
+// ---- JOB SEARCH ----
+let searchTimeout;
+async function searchJobs(val) {
+  clearTimeout(searchTimeout);
+  const el = document.getElementById('dmg-job-results');
+  if (val.length < 2) { el.innerHTML = ''; return; }
+  searchTimeout = setTimeout(async () => {
+    const { data } = await sb.from('jobs')
+      .select('id,invoice_number,customer_name,suburb_raw,status')
+      .ilike('invoice_number', `%${val}%`)
+      .limit(5);
+    if (!data?.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:6px">No jobs found</div>'; return; }
+    el.innerHTML = data.map(j => `
+      <div onclick="selectJob('${j.id}','${j.invoice_number}','${j.customer_name}','${j.suburb_raw||''}')"
+           style="padding:8px 10px;background:var(--bg);border-radius:var(--radius);margin-bottom:4px;cursor:pointer;font-size:13px;border:0.5px solid var(--border);transition:border .15s"
+           onmouseover="this.style.borderColor='var(--brand)'" onmouseout="this.style.borderColor='var(--border)'">
+        <strong style="color:var(--brand);font-family:var(--mono)">${j.invoice_number}</strong>
+        — ${j.customer_name} · ${j.suburb_raw||''}
+        <span style="float:right">${statusPill(j.status)}</span>
+      </div>`).join('');
+  }, 300);
+}
+
+function selectJob(id, invoice, customer, suburb) {
+  selectedJobId = id;
+  document.getElementById('dmg-job-id').value = id;
+  document.getElementById('dmg-invoice-search').value = invoice;
+  document.getElementById('dmg-job-results').innerHTML = '';
+  document.getElementById('dmg-job-preview').style.display = 'block';
+  document.getElementById('dmg-job-preview').innerHTML =
+    `✓ Linked to: <strong>${invoice}</strong> — ${customer} · ${suburb}`;
+}
+
+// ---- PHOTO PREVIEW ----
+function previewDamagePhotos(input) {
+  const files = Array.from(input.files);
+  damagePhotoFiles = [...damagePhotoFiles, ...files];
+  const el = document.getElementById('dmg-photo-previews');
+  el.innerHTML = damagePhotoFiles.map((f, i) => `
+    <div style="position:relative">
+      <img src="${URL.createObjectURL(f)}" class="photo-thumb" alt="${f.name}">
+      <button onclick="removeDamagePhoto(${i})" style="position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">×</button>
+    </div>`).join('');
+}
+
+function removeDamagePhoto(idx) {
+  damagePhotoFiles.splice(idx, 1);
+  previewDamagePhotos({ files: [] });
+}
+
+// ---- SAVE ----
+function openNewDamageModal() {
+  selectedJobId = null;
+  damagePhotoFiles = [];
+  document.getElementById('dmg-id').value = '';
+  document.getElementById('dmg-invoice-search').value = '';
+  document.getElementById('dmg-job-id').value = '';
+  document.getElementById('dmg-job-preview').style.display = 'none';
+  document.getElementById('dmg-job-results').innerHTML = '';
+  document.getElementById('dmg-type').value = 'damaged';
+  document.getElementById('dmg-resolution').value = 'pending';
+  document.getElementById('dmg-description').value = '';
+  document.getElementById('dmg-notes').value = '';
+  document.getElementById('dmg-photo-previews').innerHTML = '';
+  document.getElementById('redelivery-info').style.display = 'none';
+  document.getElementById('modal-damage-title').textContent = 'Log Damage Report';
+  document.getElementById('dmg-delete-btn').style.display = 'none';
+  document.getElementById('modal-damage').style.display = 'flex';
+}
+
+async function openEditDamage(id) {
+  const d = allDamages.find(x => x.id === id);
+  if (!d) return;
+  damagePhotoFiles = [];
+  document.getElementById('dmg-id').value = id;
+  document.getElementById('dmg-type').value = d.damage_type;
+  document.getElementById('dmg-resolution').value = d.resolution;
+  document.getElementById('dmg-description').value = d.description || '';
+  document.getElementById('dmg-notes').value = d.notes || '';
+  document.getElementById('dmg-photo-previews').innerHTML = '';
+  document.getElementById('redelivery-info').style.display = d.resolution === 'redelivery' ? 'block' : 'none';
+  document.getElementById('modal-damage-title').textContent = 'Edit Damage Report';
+  document.getElementById('dmg-delete-btn').style.display = 'block';
+  if (d.jobs) {
+    selectJob(d.job_id, d.jobs.invoice_number, d.jobs.customer_name, d.jobs.suburb_raw||'');
+  }
+  document.getElementById('modal-damage').style.display = 'flex';
+}
+
+async function saveDamageReport() {
+  const id = document.getElementById('dmg-id').value;
+  const jobId = document.getElementById('dmg-job-id').value || null;
+  const type = document.getElementById('dmg-type').value;
+  const resolution = document.getElementById('dmg-resolution').value;
+  const description = document.getElementById('dmg-description').value.trim();
+
+  if (!description) { showToast('Description required', 'error'); return; }
+
+  const btn = document.getElementById('dmg-save-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  const obj = {
+    job_id:        jobId,
+    branch_id:     App.branchId,
+    damage_type:   type,
+    resolution,
+    description,
+    notes:         document.getElementById('dmg-notes').value.trim() || null,
+    reported_by:   App.staffId,
+    reported_by_name: App.staff?.name,
+  };
+
+  let savedId = id;
+  if (id) {
+    await sb.from('damage_reports').update(obj).eq('id', id);
+  } else {
+    const { data } = await sb.from('damage_reports').insert(obj).select().single();
+    savedId = data?.id;
+  }
+
+  // Upload photos
+  if (damagePhotoFiles.length && savedId && jobId) {
+    for (const file of damagePhotoFiles) {
+      const path = `damage/${jobId}/${Date.now()}_${file.name}`;
+      await sb.storage.from('job-photos').upload(path, file, { upsert: true });
+      await sb.from('photos').insert({
+        job_id: jobId, stage: 'damage',
+        storage_path: path, file_name: file.name,
+        uploaded_by: App.staffId, uploaded_by_name: App.staff?.name,
+      });
+    }
+  }
+
+  // Auto-create recovery job if redelivery selected
+  if (resolution === 'redelivery' && savedId && jobId && !id) {
+    await createRecoveryJob(savedId);
+  }
+
+  btn.disabled = false; btn.textContent = 'Save Report';
+  closeModal('modal-damage');
+  showToast(id ? 'Report updated ✓' : 'Damage report logged ✓');
+  await loadDamages();
+}
+
+async function createRecoveryJob(damageId) {
+  const d = allDamages.find(x => x.id === damageId);
+  if (!d || !d.job_id) { showToast('No job linked to this report', 'error'); return; }
+
+  const { data: originalJob } = await sb.from('jobs')
+    .select('*,job_items(*)')
+    .eq('id', d.job_id)
+    .single();
+  if (!originalJob) { showToast('Original job not found', 'error'); return; }
+
+  const { data: recoveryJob } = await sb.from('jobs').insert({
+    branch_id:     App.branchId,
+    invoice_number: `RECOVERY-${originalJob.invoice_number}`,
+    type:          'recovery',
+    status:        'unpicked',
+    customer_name:  originalJob.customer_name,
+    customer_phone: originalJob.customer_phone,
+    address_raw:    originalJob.address_raw,
+    suburb_raw:     originalJob.suburb_raw,
+    postcode:       originalJob.postcode,
+    region:         originalJob.region,
+    notes:          `Recovery for ${originalJob.invoice_number}: ${d.description}`,
+    max_item_length_mm: originalJob.max_item_length_mm,
+    entered_by:    App.staffId,
+  }).select().single();
+
+  if (recoveryJob && originalJob.job_items?.length) {
+    await sb.from('job_items').insert(
+      originalJob.job_items.map(i => ({
+        job_id: recoveryJob.id,
+        product_name: i.product_name,
+        quantity: i.quantity,
+        length_mm: i.length_mm,
+      }))
+    );
+  }
+
+  if (recoveryJob) {
+    await sb.from('damage_reports').update({ recovery_job_id: recoveryJob.id }).eq('id', damageId);
+    await sb.from('job_log').insert({
+      job_id: recoveryJob.id,
+      action: `Recovery job created from damage report — ${d.damage_type}`,
+      performed_by: App.staffId,
+      performed_by_name: App.staff?.name,
+    });
+    showToast(`Recovery job created: RECOVERY-${originalJob.invoice_number}`);
+    await loadDamages();
+  }
+}
+
+async function deleteDamageReport() {
+  const id = document.getElementById('dmg-id').value;
+  if (!id || !confirm('Delete this damage report?')) return;
+  await sb.from('damage_reports').delete().eq('id', id);
+  closeModal('modal-damage');
+  showToast('Report deleted');
+  await loadDamages();
+}
+
+init();
+</script>
+</body>
+</html>

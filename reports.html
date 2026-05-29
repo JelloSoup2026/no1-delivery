@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.1 Delivery — Reports</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+.stat-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;position:relative;overflow:hidden}
+.stat-accent{position:absolute;top:0;left:0;right:0;height:3px}
+.stat-val{font-size:32px;font-weight:700;line-height:1;margin-bottom:4px}
+.stat-label{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.4px;text-transform:uppercase}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.report-table{width:100%;border-collapse:collapse}
+.report-table th{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;background:var(--bg)}
+.report-table td{padding:10px 12px;border-bottom:0.5px solid var(--border);font-size:13px;color:var(--text)}
+.report-table tr:last-child td{border-bottom:none}
+.report-table tr:hover td{background:var(--bg)}
+.chart-bar{height:8px;border-radius:4px;background:var(--brand);transition:width .5s}
+.date-range{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px}
+.section-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px}
+.section-card-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.type-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.progress-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.progress-label{font-size:12px;color:var(--text2);min-width:80px}
+.progress-track{flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;transition:width .6s}
+.progress-val{font-size:12px;font-weight:600;color:var(--text);min-width:36px;text-align:right}
+</style>
+</head>
+<body>
+<div id="topbar"></div>
+<div class="page-wrap">
+
+  <div class="section-header" style="margin-bottom:16px">
+    <div>
+      <div class="section-title">Reports</div>
+      <div class="section-sub" id="report-sub">Loading...</div>
+    </div>
+    <button class="btn btn-ghost" onclick="window.print()">🖨 Print report</button>
+  </div>
+
+  <!-- DATE RANGE -->
+  <div class="date-range no-print">
+    <div class="form-group" style="margin:0">
+      <div class="form-label">From</div>
+      <input class="form-input" type="date" id="date-from" style="width:150px">
+    </div>
+    <div class="form-group" style="margin:0">
+      <div class="form-label">To</div>
+      <input class="form-input" type="date" id="date-to" style="width:150px">
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-self:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="setRange(7)">7 days</button>
+      <button class="btn btn-ghost btn-sm" onclick="setRange(30)">30 days</button>
+      <button class="btn btn-ghost btn-sm" onclick="setRange(90)">90 days</button>
+      <button class="btn btn-primary btn-sm" onclick="loadReport()">Apply</button>
+    </div>
+  </div>
+
+  <!-- SUMMARY STATS -->
+  <div class="grid4" style="margin-bottom:16px" id="summary-stats"></div>
+
+  <!-- TWO COLUMN LAYOUT -->
+  <div class="grid2" style="gap:16px">
+
+    <!-- LEFT -->
+    <div>
+      <!-- DELIVERY BREAKDOWN -->
+      <div class="section-card">
+        <div class="section-card-title">Deliveries by type</div>
+        <div id="type-breakdown"></div>
+      </div>
+
+      <!-- STATUS BREAKDOWN -->
+      <div class="section-card">
+        <div class="section-card-title">Current job statuses</div>
+        <div id="status-breakdown"></div>
+      </div>
+
+      <!-- DAMAGE SUMMARY -->
+      <div class="section-card">
+        <div class="section-card-title">
+          Damage & recovery
+          <a href="damage.html" style="font-size:12px;color:var(--brand);font-weight:500">View all →</a>
+        </div>
+        <div id="damage-summary"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div>
+      <!-- DAILY BREAKDOWN -->
+      <div class="section-card">
+        <div class="section-card-title">Daily deliveries</div>
+        <div id="daily-breakdown" style="overflow-x:auto"></div>
+      </div>
+
+      <!-- TOP SUBURBS -->
+      <div class="section-card">
+        <div class="section-card-title">Top delivery suburbs</div>
+        <div id="suburb-breakdown"></div>
+      </div>
+
+      <!-- VEHICLE UTILISATION -->
+      <div class="section-card">
+        <div class="section-card-title">Vehicle runs</div>
+        <div id="vehicle-breakdown"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+async function init() {
+  const ok = await initApp(['super_admin','branch_manager','planner']);
+  if (!ok) return;
+  renderTopbar('reports');
+  setRange(30);
+}
+
+function setRange(days) {
+  const to   = new Date();
+  const from = new Date(Date.now() - days * 86400000);
+  document.getElementById('date-to').value   = to.toISOString().slice(0,10);
+  document.getElementById('date-from').value = from.toISOString().slice(0,10);
+  loadReport();
+}
+
+async function loadReport() {
+  const from = document.getElementById('date-from').value;
+  const to   = document.getElementById('date-to').value;
+  if (!from || !to) return;
+
+  document.getElementById('report-sub').textContent = `${fmtDate(from)} — ${fmtDate(to)}`;
+
+  // Load all jobs in range
+  const { data: jobs } = await sb.from('jobs')
+    .select('id,type,status,delivery_date,suburb_raw,delivered_at,created_at,max_item_length_mm')
+    .gte('delivery_date', from)
+    .lte('delivery_date', to)
+    .order('delivery_date');
+
+  // Load runs in range
+  const { data: runs } = await sb.from('runs')
+    .select('id,date,slot,status,vehicle_id,vehicles(name)')
+    .gte('date', from)
+    .lte('date', to);
+
+  // Load damage reports
+  const { data: damages } = await sb.from('damage_reports')
+    .select('id,damage_type,resolution,created_at')
+    .gte('created_at', from + 'T00:00:00')
+    .lte('created_at', to + 'T23:59:59');
+
+  renderSummary(jobs || [], runs || [], damages || []);
+  renderTypeBreakdown(jobs || []);
+  renderStatusBreakdown(jobs || []);
+  renderDailBreakdown(jobs || [], from, to);
+  renderSuburbBreakdown(jobs || []);
+  renderVehicleBreakdown(runs || []);
+  renderDamageSummary(damages || []);
+}
+
+function renderSummary(jobs, runs, damages) {
+  const total     = jobs.length;
+  const delivered = jobs.filter(j => j.status === 'delivered').length;
+  const rate      = total ? Math.round(delivered / total * 100) : 0;
+  const priority  = jobs.filter(j => j.type === 'priority').length;
+  const recovery  = jobs.filter(j => j.type === 'recovery').length;
+
+  document.getElementById('summary-stats').innerHTML = [
+    { label:'Total jobs',     val:total,     color:'var(--brand)',       accent:'var(--brand)' },
+    { label:'Delivered',      val:delivered, color:'var(--green)',       accent:'var(--green-border)' },
+    { label:'Delivery rate',  val:rate+'%',  color:rate>=90?'var(--green)':'var(--amber)', accent:rate>=90?'var(--green-border)':'var(--amber-border)' },
+    { label:'Damage reports', val:damages.length, color:'var(--red)',   accent:'var(--red-border)' },
+  ].map(s => `
+    <div class="stat-card">
+      <div class="stat-accent" style="background:${s.accent}"></div>
+      <div class="stat-val" style="color:${s.color}">${s.val}</div>
+      <div class="stat-label">${s.label}</div>
+    </div>`).join('');
+}
+
+function renderTypeBreakdown(jobs) {
+  const types = { standard:0, priority:0, recovery:0, shed:0 };
+  jobs.forEach(j => { if (types[j.type] !== undefined) types[j.type]++; });
+  const total = jobs.length || 1;
+  const colors = { standard:'var(--brand)', priority:'var(--amber)', recovery:'var(--red)', shed:'var(--teal)' };
+  const labels = { standard:'Standard', priority:'Priority 7am', recovery:'Recovery', shed:'Shed' };
+
+  document.getElementById('type-breakdown').innerHTML = Object.entries(types).map(([type, count]) => `
+    <div class="progress-row">
+      <div style="display:flex;align-items:center;gap:6px;min-width:110px">
+        <div class="type-dot" style="background:${colors[type]}"></div>
+        <span class="progress-label" style="min-width:auto">${labels[type]}</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width:${Math.round(count/total*100)}%;background:${colors[type]}"></div>
+      </div>
+      <span class="progress-val">${count}</span>
+    </div>`).join('');
+}
+
+function renderStatusBreakdown(jobs) {
+  const statuses = {};
+  jobs.forEach(j => { statuses[j.status] = (statuses[j.status]||0)+1; });
+  const total = jobs.length || 1;
+  const order = ['unpicked','picked','loaded','departed','arrived','delivered'];
+
+  document.getElementById('status-breakdown').innerHTML = order
+    .filter(s => statuses[s])
+    .map(s => {
+      const st = JOB_STATUSES[s] || { label:s, color:'#a3a4a4' };
+      return `
+      <div class="progress-row">
+        <div style="display:flex;align-items:center;gap:6px;min-width:110px">
+          <div class="type-dot" style="background:${st.color}"></div>
+          <span class="progress-label" style="min-width:auto">${st.label}</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:${Math.round((statuses[s]||0)/total*100)}%;background:${st.color}"></div>
+        </div>
+        <span class="progress-val">${statuses[s]||0}</span>
+      </div>`;
+    }).join('') || '<div style="font-size:13px;color:var(--text3)">No data</div>';
+}
+
+function renderDailBreakdown(jobs, from, to) {
+  // Group by date
+  const byDate = {};
+  jobs.forEach(j => {
+    if (!j.delivery_date) return;
+    byDate[j.delivery_date] = (byDate[j.delivery_date]||0)+1;
+  });
+
+  const dates = Object.keys(byDate).sort();
+  if (!dates.length) {
+    document.getElementById('daily-breakdown').innerHTML = '<div style="font-size:13px;color:var(--text3)">No data for this range</div>';
+    return;
+  }
+
+  const max = Math.max(...Object.values(byDate));
+  document.getElementById('daily-breakdown').innerHTML = `
+    <table class="report-table">
+      <thead><tr><th>Date</th><th>Jobs</th><th style="width:40%">Volume</th></tr></thead>
+      <tbody>${dates.map(d => `
+        <tr>
+          <td style="font-family:var(--mono);font-size:12px">${fmtDate(d)}</td>
+          <td style="font-weight:600;color:var(--brand)">${byDate[d]}</td>
+          <td><div class="chart-bar" style="width:${Math.round(byDate[d]/max*100)}%"></div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderSuburbBreakdown(jobs) {
+  const bySuburb = {};
+  jobs.forEach(j => {
+    if (!j.suburb_raw) return;
+    bySuburb[j.suburb_raw] = (bySuburb[j.suburb_raw]||0)+1;
+  });
+  const sorted = Object.entries(bySuburb).sort((a,b) => b[1]-a[1]).slice(0,10);
+  const max = sorted[0]?.[1] || 1;
+
+  document.getElementById('suburb-breakdown').innerHTML = sorted.length ? `
+    <table class="report-table">
+      <thead><tr><th>Suburb</th><th>Jobs</th><th style="width:40%"></th></tr></thead>
+      <tbody>${sorted.map(([suburb, count]) => `
+        <tr>
+          <td>${suburb}</td>
+          <td style="font-weight:600;color:var(--brand)">${count}</td>
+          <td><div class="chart-bar" style="width:${Math.round(count/max*100)}%"></div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>` : '<div style="font-size:13px;color:var(--text3)">No data</div>';
+}
+
+function renderVehicleBreakdown(runs) {
+  const byVehicle = {};
+  runs.forEach(r => {
+    const name = r.vehicles?.name || 'Unknown';
+    byVehicle[name] = (byVehicle[name]||0)+1;
+  });
+  const sorted = Object.entries(byVehicle).sort((a,b) => b[1]-a[1]);
+  const max = sorted[0]?.[1] || 1;
+
+  document.getElementById('vehicle-breakdown').innerHTML = sorted.length ? `
+    <table class="report-table">
+      <thead><tr><th>Vehicle</th><th>Runs</th><th style="width:40%"></th></tr></thead>
+      <tbody>${sorted.map(([name, count]) => `
+        <tr>
+          <td>${name}</td>
+          <td style="font-weight:600;color:var(--brand)">${count}</td>
+          <td><div class="chart-bar" style="width:${Math.round(count/max*100)}%"></div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>` : '<div style="font-size:13px;color:var(--text3)">No runs in this range</div>';
+}
+
+function renderDamageSummary(damages) {
+  const el = document.getElementById('damage-summary');
+  if (!damages.length) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--green);font-weight:500">✓ No damage reports in this period</div>';
+    return;
+  }
+  const byType = {};
+  damages.forEach(d => { byType[d.damage_type] = (byType[d.damage_type]||0)+1; });
+  const typeLabels = { damaged:'Damaged', wrong_item:'Wrong item', missing_item:'Missing item', refused:'Refused', other:'Other' };
+  el.innerHTML = `
+    <table class="report-table">
+      <thead><tr><th>Type</th><th>Count</th></tr></thead>
+      <tbody>${Object.entries(byType).map(([type, count]) => `
+        <tr>
+          <td>${typeLabels[type]||type}</td>
+          <td style="font-weight:600;color:var(--red)">${count}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+init();
+</script>
+</body>
+</html>

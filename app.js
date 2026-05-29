@@ -196,6 +196,8 @@ function renderTopbar(activePage = '') {
       </a>
       <a href="runs.html"      class="nav-item ${activePage==='runs'?'active':''}">Runs</a>
       <a href="calendar.html"  class="nav-item ${activePage==='calendar'?'active':''}">Calendar</a>
+      <a href="reports.html"   class="nav-item ${activePage==='reports'?'active':''}">Reports</a>
+      <a href="damage.html"    class="nav-item ${activePage==='damage'?'active':''}">Damage</a>
       ${role === 'super_admin' || role === 'branch_manager' ? `
       <a href="requests-admin.html" class="nav-item ${activePage==='requests'?'active':''}">Requests <span class="nav-badge" id="requests-badge" style="display:none"></span></a>
       <a href="fleet.html"     class="nav-item ${activePage==='fleet'?'active':''}">Fleet</a>
