@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.1 Delivery — Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+.cal-wrap{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.cal-header{background:var(--brand);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cal-header-title{font-size:18px;font-weight:700;color:#fff}
+.cal-header-sub{font-size:12px;color:rgba(255,255,255,.65);margin-top:2px}
+.cal-nav{display:flex;align-items:center;gap:8px}
+.cal-nav-btn{background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;font-size:16px;font-weight:600;padding:6px 12px;cursor:pointer;font-family:var(--font);transition:background .15s}
+.cal-nav-btn:hover{background:rgba(255,255,255,.25)}
+.cal-nav-month{font-size:16px;font-weight:600;color:#fff;min-width:160px;text-align:center}
+.cal-grid-header{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:0.5px solid var(--border)}
+.cal-day-label{padding:10px 6px;text-align:center;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.4px;text-transform:uppercase}
+.cal-day-label.weekend{color:var(--brand-mid)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-cell{border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border);padding:6px 8px;min-height:90px;cursor:pointer;transition:background .15s;position:relative;vertical-align:top}
+.cal-cell:nth-child(7n){border-right:none}
+.cal-cell:hover{background:rgba(0,71,159,.03)}
+.cal-cell.other-month{background:var(--bg);opacity:.5}
+.cal-cell.today{background:rgba(0,71,159,.04)}
+.cal-cell.today .cal-date{background:var(--brand);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+.cal-cell.weekend-cell{background:rgba(75,127,185,.02)}
+.cal-cell.has-shed{background:rgba(14,116,144,.04)}
+.cal-date{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+.cal-dots{display:flex;flex-wrap:wrap;gap:2px;margin-bottom:3px}
+.cal-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.cal-item{font-size:10px;font-weight:500;border-radius:3px;padding:1px 5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.cal-item.run{background:rgba(0,71,159,.1);color:var(--brand)}
+.cal-item.priority{background:var(--amber-bg);color:var(--amber)}
+.cal-item.shed{background:var(--teal-bg);color:var(--teal)}
+.cal-item.recovery{background:var(--red-bg);color:var(--red)}
+.cal-more{font-size:10px;color:var(--text3);font-weight:500;cursor:pointer;padding:1px 4px}
+.cal-more:hover{color:var(--brand)}
+
+/* DAY DETAIL PANEL */
+.day-panel{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:20px;position:sticky;top:76px;max-height:calc(100vh - 96px);overflow-y:auto}
+.day-panel-date{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px}
+.day-panel-sub{font-size:12px;color:var(--text3);margin-bottom:16px}
+.day-job-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:border .15s}
+.day-job-card:hover{border-color:var(--border2)}
+.day-job-card.priority{border-left:2px solid var(--amber-border)}
+.day-job-card.recovery{border-left:2px solid var(--red-border)}
+.day-job-card.shed{border-left:2px solid var(--teal-border)}
+.shed-window{background:var(--teal-bg);border:0.5px solid var(--teal-border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;padding:12px 20px;border-top:0.5px solid var(--border);background:var(--bg)}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* SUMMARY STATS */
+.month-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.month-stat{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px;text-align:center}
+.month-stat-val{font-size:22px;font-weight:700;line-height:1;margin-bottom:3px}
+.month-stat-label{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div id="topbar"></div>
+<div class="page-wrap">
+
+  <div class="section-header" style="margin-bottom:16px">
+    <div>
+      <div class="section-title">Run Calendar</div>
+      <div class="section-sub">Delivery schedule · Shed windows · Priority flags</div>
+    </div>
+    <div style="display:flex;gap:8px" class="no-print">
+      <button class="btn btn-ghost" onclick="goToToday()">Today</button>
+      <button class="btn btn-primary" onclick="window.location.href='jobs.html'">+ New Job</button>
+    </div>
+  </div>
+
+  <!-- MONTH STATS -->
+  <div class="month-stats" id="month-stats"></div>
+
+  <!-- MAIN LAYOUT -->
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start">
+
+    <!-- CALENDAR -->
+    <div class="cal-wrap">
+      <div class="cal-header">
+        <div>
+          <div class="cal-header-title" id="cal-title">June 2025</div>
+          <div class="cal-header-sub" id="cal-sub">Loading...</div>
+        </div>
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+          <div class="cal-nav-month" id="cal-nav-label"></div>
+          <button class="cal-nav-btn" onclick="changeMonth(1)">&#8250;</button>
+        </div>
+      </div>
+      <div class="cal-grid-header">
+        <div class="cal-day-label">Mon</div>
+        <div class="cal-day-label">Tue</div>
+        <div class="cal-day-label">Wed</div>
+        <div class="cal-day-label">Thu</div>
+        <div class="cal-day-label">Fri</div>
+        <div class="cal-day-label weekend">Sat</div>
+        <div class="cal-day-label weekend">Sun</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--brand)"></div>Delivery run</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--amber-border)"></div>Priority 7am</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Shed due</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Recovery</div>
+        <div class="legend-item"><div class="cal-date" style="background:var(--brand);color:#fff;border-radius:50%;width:14px;height:14px;font-size:9px;display:inline-flex;align-items:center;justify-content:center;margin-right:2px">•</div>Today</div>
+      </div>
+    </div>
+
+    <!-- DAY DETAIL PANEL -->
+    <div class="day-panel" id="day-panel">
+      <div class="day-panel-date">Select a day</div>
+      <div class="day-panel-sub">Click any date to see scheduled jobs and runs</div>
+      <div id="day-panel-content" style="color:var(--text3);font-size:13px">No date selected.</div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+let currentYear  = new Date().getFullYear();
+let currentMonth = new Date().getMonth();
+let allJobs      = [];
+let allRuns      = [];
+let selectedDate = null;
+
+async function init() {
+  const ok = await initApp(['super_admin','branch_manager','planner']);
+  if (!ok) return;
+  renderTopbar('calendar');
+  await loadData();
+  renderCalendar();
+}
+
+async function loadData() {
+  // Load jobs for a 3-month window for shed tracking
+  const from = new Date(currentYear, currentMonth - 1, 1).toISOString().slice(0, 10);
+  const to   = new Date(currentYear, currentMonth + 3, 0).toISOString().slice(0, 10);
+
+  const [jobsRes, runsRes] = await Promise.all([
+    sb.from('jobs')
+      .select('id,invoice_number,customer_name,type,status,delivery_date,run_slot,suburb_raw,shed_due_from,shed_due_to,max_item_length_mm,customer_phone,address_raw')
+      .or(`delivery_date.gte.${from},shed_due_to.gte.${from}`)
+      .neq('status', 'delivered'),
+    sb.from('runs')
+      .select('id,date,slot,status,vehicles(name),driver:staff!runs_driver_id_fkey(name)')
+      .gte('date', from)
+      .lte('date', to)
+      .order('date').order('slot'),
+  ]);
+
+  allJobs = jobsRes.data || [];
+  allRuns = runsRes.data || [];
+}
+
+function renderCalendar() {
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const todayD = new Date();
+  const y = currentYear, m = currentMonth;
+
+  document.getElementById('cal-title').textContent = `${monthNames[m]} ${y}`;
+  document.getElementById('cal-nav-label').textContent = `${monthNames[m]} ${y}`;
+  document.getElementById('cal-sub').textContent = buildMonthSub();
+
+  // Build month stats
+  renderMonthStats();
+
+  // First day of month (0=Sun, shift to Mon=0)
+  const firstDay = new Date(y, m, 1).getDay();
+  const startOffset = firstDay === 0 ? 6 : firstDay - 1;
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const daysInPrevMonth = new Date(y, m, 0).getDate();
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
+
+  for (let i = 0; i < totalCells; i++) {
+    let day, month, year, isCurrentMonth = true;
+    if (i < startOffset) {
+      day = daysInPrevMonth - startOffset + i + 1;
+      month = m - 1; year = y;
+      isCurrentMonth = false;
+    } else if (i >= startOffset + daysInMonth) {
+      day = i - startOffset - daysInMonth + 1;
+      month = m + 1; year = y;
+      isCurrentMonth = false;
+    } else {
+      day = i - startOffset + 1;
+      month = m; year = y;
+    }
+
+    const dateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday = day === todayD.getDate() && month === todayD.getMonth() && year === todayD.getFullYear();
+    const isWeekend = (i % 7) >= 5;
+    const isSun = (i % 7) === 6;
+
+    // Jobs for this date
+    const dayJobs = allJobs.filter(j => j.delivery_date === dateStr);
+    const dayRuns = allRuns.filter(r => r.date === dateStr);
+    // Shed jobs whose window includes this date
+    const shedJobs = allJobs.filter(j =>
+      j.type === 'shed' &&
+      j.shed_due_from && j.shed_due_to &&
+      j.shed_due_from <= dateStr && j.shed_due_to >= dateStr
+    );
+
+    const hasPriority = dayJobs.some(j => j.type === 'priority');
+    const hasRecovery = dayJobs.some(j => j.type === 'recovery');
+    const hasShed = shedJobs.length > 0;
+
+    const cell = document.createElement('div');
+    cell.className = `cal-cell${!isCurrentMonth?' other-month':''}${isToday?' today':''}${isWeekend?' weekend-cell':''}${hasShed?' has-shed':''}`;
+    cell.onclick = () => selectDay(dateStr, day, month, year);
+    if (selectedDate === dateStr) cell.style.outline = '2px solid var(--brand)';
+
+    // Date number
+    let dateHTML = `<div class="cal-date">${day}</div>`;
+
+    // Dots row
+    let dotsHTML = '<div class="cal-dots">';
+    if (dayRuns.length) dotsHTML += `<div class="cal-dot" style="background:var(--brand)" title="Run scheduled"></div>`;
+    if (hasPriority) dotsHTML += `<div class="cal-dot" style="background:var(--amber-border)" title="Priority job"></div>`;
+    if (hasRecovery) dotsHTML += `<div class="cal-dot" style="background:var(--red)" title="Recovery job"></div>`;
+    if (hasShed) dotsHTML += `<div class="cal-dot" style="background:var(--teal)" title="Shed due"></div>`;
+    dotsHTML += '</div>';
+
+    // Items (show up to 2)
+    let itemsHTML = '';
+    const showItems = [...dayRuns.slice(0,1), ...dayJobs.filter(j=>j.type==='priority').slice(0,1)];
+    showItems.forEach(item => {
+      if (item.slot !== undefined) {
+        // It's a run
+        itemsHTML += `<div class="cal-item run">${item.slot} — ${item.vehicles?.name||'TBA'}</div>`;
+      } else {
+        itemsHTML += `<div class="cal-item priority">⚡ ${item.customer_name}</div>`;
+      }
+    });
+
+    if (hasShed && shedJobs.length) {
+      itemsHTML += `<div class="cal-item shed">🏠 ${shedJobs.length} shed${shedJobs.length>1?'s':''}</div>`;
+    }
+
+    const total = dayJobs.length + dayRuns.length;
+    if (total > 2) {
+      itemsHTML += `<div class="cal-more">+${total - 2} more</div>`;
+    }
+
+    if (isSun && isCurrentMonth) {
+      dateHTML += `<div style="font-size:9px;color:var(--text3);line-height:1;margin-bottom:2px">Sun</div>`;
+    }
+
+    cell.innerHTML = dateHTML + dotsHTML + itemsHTML;
+    grid.appendChild(cell);
+  }
+}
+
+function buildMonthSub() {
+  const y = currentYear, m = currentMonth;
+  const from = `${y}-${String(m+1).padStart(2,'0')}-01`;
+  const to   = new Date(y, m+1, 0).toISOString().slice(0,10);
+  const monthJobs = allJobs.filter(j => j.delivery_date >= from && j.delivery_date <= to);
+  const monthRuns = allRuns.filter(r => r.date >= from && r.date <= to);
+  return `${monthJobs.length} jobs · ${monthRuns.length} runs · ${monthJobs.filter(j=>j.type==='shed').length} shed deliveries`;
+}
+
+function renderMonthStats() {
+  const y = currentYear, m = currentMonth;
+  const from = `${y}-${String(m+1).padStart(2,'0')}-01`;
+  const to   = new Date(y, m+1, 0).toISOString().slice(0,10);
+  const monthJobs = allJobs.filter(j => j.delivery_date >= from && j.delivery_date <= to);
+  const monthRuns = allRuns.filter(r => r.date >= from && r.date <= to);
+
+  document.getElementById('month-stats').innerHTML = [
+    { label:'Jobs this month',  val: monthJobs.length,                                  color:'var(--brand)' },
+    { label:'Runs scheduled',   val: monthRuns.length,                                  color:'var(--brand-mid)' },
+    { label:'Priority 7am',     val: monthJobs.filter(j=>j.type==='priority').length,   color:'var(--amber)' },
+    { label:'Shed deliveries',  val: monthJobs.filter(j=>j.type==='shed').length,       color:'var(--teal)' },
+  ].map(s => `
+    <div class="month-stat">
+      <div class="month-stat-val" style="color:${s.color}">${s.val}</div>
+      <div class="month-stat-label">${s.label}</div>
+    </div>`).join('');
+}
+
+function selectDay(dateStr, day, month, year) {
+  selectedDate = dateStr;
+  renderCalendar();
+
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dayNames   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const d = new Date(year, month, day);
+
+  document.getElementById('day-panel-date').textContent =
+    `${dayNames[d.getDay()]} ${day} ${monthNames[month]} ${year}`;
+
+  const dayJobs = allJobs.filter(j => j.delivery_date === dateStr);
+  const dayRuns = allRuns.filter(r => r.date === dateStr);
+  const shedJobs = allJobs.filter(j =>
+    j.type === 'shed' && j.shed_due_from && j.shed_due_to &&
+    j.shed_due_from <= dateStr && j.shed_due_to >= dateStr
+  );
+
+  const isSat = d.getDay() === 6;
+  const isSun = d.getDay() === 0;
+
+  let html = '';
+
+  if (isSun) {
+    html += `<div class="alert alert-warn" style="margin-bottom:12px;font-size:12px">Sunday — no standard deliveries scheduled.</div>`;
+  }
+  if (isSat && !dayJobs.length && !dayRuns.length) {
+    html += `<div class="alert alert-info" style="margin-bottom:12px;font-size:12px">Saturday — deliveries run when needed.</div>`;
+  }
+
+  // Runs
+  if (dayRuns.length) {
+    html += `<div style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:8px">RUNS</div>`;
+    html += dayRuns.map(r => `
+      <div style="background:var(--brand);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:600;color:#fff">${r.slot} — ${r.vehicles?.name||'TBA'}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px">Driver: ${r.driver?.name||'TBA'} · ${r.status}</div>
+      </div>`).join('');
+  }
+
+  // Priority jobs
+  const priority = dayJobs.filter(j => j.type === 'priority');
+  if (priority.length) {
+    html += `<div style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin:8px 0">PRIORITY 7AM</div>`;
+    html += priority.map(j => dayJobCard(j)).join('');
+  }
+
+  // Recovery jobs
+  const recovery = dayJobs.filter(j => j.type === 'recovery');
+  if (recovery.length) {
+    html += `<div style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin:8px 0">RECOVERIES</div>`;
+    html += recovery.map(j => dayJobCard(j)).join('');
+  }
+
+  // Standard jobs
+  const standard = dayJobs.filter(j => j.type === 'standard');
+  if (standard.length) {
+    html += `<div style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin:8px 0">STANDARD (${standard.length})</div>`;
+    html += standard.map(j => dayJobCard(j)).join('');
+  }
+
+  // Shed windows
+  if (shedJobs.length) {
+    html += `<div style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin:8px 0">SHED DELIVERY WINDOWS</div>`;
+    html += shedJobs.map(j => `
+      <div class="shed-window">
+        <div class="invoice-num" style="font-size:12px">${j.invoice_number}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">${j.customer_name}</div>
+        <div style="font-size:11px;color:var(--teal);margin-top:3px">${j.suburb_raw||''}</div>
+        <div style="font-size:11px;color:var(--teal);margin-top:3px;font-weight:500">
+          Window: ${fmtDate(j.shed_due_from)} → ${fmtDate(j.shed_due_to)}
+        </div>
+        ${statusPill(j.status)}
+      </div>`).join('');
+  }
+
+  if (!dayJobs.length && !dayRuns.length && !shedJobs.length) {
+    html = `<div style="text-align:center;padding:24px 0;color:var(--text3)">
+      <div style="font-size:24px;margin-bottom:8px">📅</div>
+      <div style="font-size:13px">Nothing scheduled for this day.</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px" onclick="window.location.href='jobs.html'">+ Add job for this date</button>
+    </div>`;
+  }
+
+  document.getElementById('day-panel-sub').textContent =
+    `${dayJobs.length} job${dayJobs.length!==1?'s':''} · ${dayRuns.length} run${dayRuns.length!==1?'s':''}${shedJobs.length?' · '+shedJobs.length+' shed window'+(shedJobs.length!==1?'s':''):''}`;
+  document.getElementById('day-panel-content').innerHTML = html;
+}
+
+function dayJobCard(j) {
+  return `
+  <div class="day-job-card ${j.type}" onclick="window.location.href='jobs.html'">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+      <div>
+        <span class="invoice-num" style="font-size:11px">${j.invoice_number}</span>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-top:1px">${j.customer_name}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:1px">${j.suburb_raw||''}${j.run_slot&&j.run_slot!=='unassigned'?' · '+j.run_slot+' run':''}</div>
+        ${j.customer_phone?`<div style="margin-top:4px">${phoneLink(j.customer_phone)}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+        ${statusPill(j.status)}
+        ${j.max_item_length_mm>6000?'<span class="tag tag-warn" style="font-size:9px">9m truck</span>':''}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function changeMonth(dir) {
+  currentMonth += dir;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
+  selectedDate = null;
+  document.getElementById('day-panel-date').textContent = 'Select a day';
+  document.getElementById('day-panel-sub').textContent = '';
+  document.getElementById('day-panel-content').innerHTML = 'No date selected.';
+  await loadData();
+  renderCalendar();
+}
+
+function goToToday() {
+  currentYear  = new Date().getFullYear();
+  currentMonth = new Date().getMonth();
+  selectedDate = null;
+  loadData().then(renderCalendar);
+}
+
+init();
+</script>
+</body>
+</html>
