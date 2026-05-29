@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.1 Delivery — Request</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--brand:#00479f;--bg:#f0f4f8;--surface:#fff;--border:#b4cbe1;--text:#1a1a2e;--text2:#565656;--text3:#a3a4a4;--green:#1a7a4a;--green-bg:#e8f5ee;--green-border:#7ec8a0;--radius:10px;--radius-lg:16px;--font:'DM Sans',system-ui,sans-serif;}
+body{background:var(--brand);font-family:var(--font);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.card{background:var(--surface);border-radius:var(--radius-lg);padding:32px;width:100%;max-width:400px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.icon{font-size:48px;margin-bottom:16px}
+.title{font-size:20px;font-weight:600;color:var(--text);margin-bottom:8px}
+.sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px}
+.name-badge{display:inline-block;padding:8px 20px;background:var(--green-bg);border:0.5px solid var(--green-border);border-radius:20px;font-size:13px;font-weight:600;color:var(--green);margin-bottom:20px}
+.stage-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(0,71,159,.08);color:var(--brand);border:0.5px solid #b4cbe1;margin-bottom:20px}
+.btn{width:100%;padding:12px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
+.btn:hover{background:#003a85}
+.status{padding:10px 14px;background:var(--green-bg);border:0.5px solid var(--green-border);border-radius:var(--radius);font-size:12px;color:var(--green);font-weight:500;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">📋</div>
+  <div class="title">Branch Request Portal</div>
+  <div class="status">✓ Login successful — routing working correctly</div>
+  <div class="name-badge" id="name-badge">Loading...</div>
+  <div class="sub">This will become the branch request portal — submit delivery requests and track their status. Coming in Stage 6.</div>
+  <div class="stage-badge">Stage 6 — Branch Requests</div>
+  <button class="btn" onclick="logout()">Sign out</button>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL='https://mnhwcuawsdxeyzqkjdwq.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uaHdjdWF3c2R4ZXl6cWtqZHdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMjM1ODksImV4cCI6MjA5NTU5OTU4OX0.ALToJk7zpFYRLZPwoAN7d8EHsU6AE0wNKfNxVCoS_tk';
+const {createClient}=supabase;
+const sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+async function init(){
+  const name=sessionStorage.getItem('staff_name');
+  const role=sessionStorage.getItem('staff_role');
+  const pin=sessionStorage.getItem('pin_auth');
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session&&!pin){window.location.href='login.html';return;}
+  document.getElementById('name-badge').textContent='👋 '+( name||'Staff member')+' — logged in';
+}
+async function logout(){await sb.auth.signOut();sessionStorage.clear();window.location.href='login.html';}
+init();
+</script>
+</body>
+</html>
