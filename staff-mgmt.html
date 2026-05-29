@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.1 Delivery — Staff</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+.staff-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;transition:border .15s;position:relative}
+.staff-card:hover{border-color:var(--border2)}
+.staff-card.inactive{opacity:.55}
+.avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0;color:#fff}
+.role-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px}
+.pin-display{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--brand);letter-spacing:4px}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+</style>
+</head>
+<body>
+<div id="topbar"></div>
+<div class="page-wrap">
+
+  <div class="section-header" style="margin-bottom:20px">
+    <div>
+      <div class="section-title">Staff</div>
+      <div class="section-sub" id="staff-sub">Loading...</div>
+    </div>
+    <button class="btn btn-primary" onclick="openStaffModal()">+ Add Staff</button>
+  </div>
+
+  <div class="stat-row" id="staff-stats"></div>
+
+  <div class="grid3" id="staff-grid"></div>
+
+</div>
+
+<!-- STAFF MODAL -->
+<div id="modal-staff" class="modal-overlay" style="display:none" onclick="closeModal('modal-staff',event)">
+<div class="modal" onclick="event.stopPropagation()">
+  <div class="modal-header">
+    <div class="modal-title" id="modal-staff-title">Add Staff Member</div>
+    <button class="modal-close" onclick="closeModal('modal-staff')">&times;</button>
+  </div>
+  <input type="hidden" id="s-id">
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Full name</div>
+        <input class="form-input" id="s-name" placeholder="e.g. Mike Johnson">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Role</div>
+        <select class="form-select" id="s-role" onchange="toggleAuthFields()">
+          <option value="super_admin">Super Admin</option>
+          <option value="branch_manager">Branch Manager</option>
+          <option value="planner">Planner</option>
+          <option value="driver">Driver</option>
+          <option value="picker">Picker / Loader</option>
+          <option value="branch_requester">Branch Requester</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Phone</div>
+        <input class="form-input" id="s-phone" placeholder="04XX XXX XXX">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Email</div>
+        <input class="form-input" type="email" id="s-email" placeholder="name@company.com.au">
+      </div>
+    </div>
+
+    <!-- PIN section for warehouse/driver roles -->
+    <div id="pin-section">
+      <div class="form-group">
+        <div class="form-label">4-digit PIN</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="form-input mono" type="password" id="s-pin" maxlength="4" placeholder="••••" style="width:120px;font-size:20px;letter-spacing:4px;font-weight:700;text-align:center">
+          <button class="btn btn-ghost btn-sm" onclick="generatePin()">Generate PIN</button>
+          <span id="pin-preview" style="font-size:13px;color:var(--text3)"></span>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Used for warehouse floor and driver login. Leave blank if using email login only.</div>
+      </div>
+    </div>
+
+    <!-- Email login section for office roles -->
+    <div id="email-auth-section" style="display:none">
+      <div style="background:var(--teal-bg);border:0.5px solid var(--teal-border);border-radius:var(--radius);padding:12px">
+        <div style="font-size:11px;font-weight:600;color:var(--teal);margin-bottom:6px;letter-spacing:.3px">EMAIL LOGIN</div>
+        <div style="font-size:12px;color:var(--teal);line-height:1.5">This role uses email + password to log in. After saving, go to Supabase → Authentication → Users and invite this staff member's email address. Then link their auth ID to this staff record.</div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="s-active" checked style="width:16px;height:16px;cursor:pointer">
+      <label for="s-active" style="font-size:13px;color:var(--text2);cursor:pointer">Active — can log in to the system</label>
+    </div>
+
+    <div class="divider"></div>
+    <div style="display:flex;gap:8px;justify-content:space-between">
+      <button class="btn btn-danger btn-sm" id="s-delete-btn" style="display:none" onclick="deleteStaff()">Delete</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-ghost" onclick="closeModal('modal-staff')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveStaff()">Save Staff</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+let allStaff = [];
+
+const ROLE_COLORS = {
+  super_admin:      '#00479f',
+  branch_manager:   '#4b7fb9',
+  planner:          '#0e7490',
+  driver:           '#5b21b6',
+  picker:           '#8a5a00',
+  branch_requester: '#b91c1c',
+};
+const ROLE_LABELS = {
+  super_admin:      'Super Admin',
+  branch_manager:   'Branch Manager',
+  planner:          'Planner',
+  driver:           'Driver',
+  picker:           'Picker / Loader',
+  branch_requester: 'Branch Requester',
+};
+const PIN_ROLES = ['driver','picker','branch_requester'];
+const EMAIL_ROLES = ['super_admin','branch_manager','planner'];
+
+async function init() {
+  const ok = await initApp(['super_admin','branch_manager']);
+  if (!ok) return;
+  renderTopbar('staff');
+  await loadStaff();
+}
+
+async function loadStaff() {
+  const { data, error } = await sb.from('staff')
+    .select('*')
+    .order('role').order('name');
+  if (error) { showToast('Could not load staff', 'error'); return; }
+  allStaff = data || [];
+  renderStats();
+  renderStaff();
+}
+
+function renderStats() {
+  const active   = allStaff.filter(s => s.active);
+  const drivers  = allStaff.filter(s => s.role === 'driver' && s.active);
+  const pickers  = allStaff.filter(s => s.role === 'picker' && s.active);
+  const inactive = allStaff.filter(s => !s.active);
+  document.getElementById('staff-sub').textContent =
+    `${allStaff.length} staff members · ${active.length} active`;
+  document.getElementById('staff-stats').innerHTML = [
+    { label:'Total active',  val: active.length,   color:'var(--brand)' },
+    { label:'Drivers',       val: drivers.length,  color:'var(--purple,#5b21b6)' },
+    { label:'Pickers',       val: pickers.length,  color:'var(--amber)' },
+    { label:'Inactive',      val: inactive.length, color:'var(--text3)' },
+  ].map(s => `
+    <div class="stat-card">
+      <div class="stat-val" style="color:${s.color};font-size:28px;font-weight:700;line-height:1;margin-bottom:4px">${s.val}</div>
+      <div style="font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.3px;text-transform:uppercase">${s.label}</div>
+    </div>`).join('');
+}
+
+function getInitials(name) {
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2);
+}
+
+function renderStaff() {
+  const el = document.getElementById('staff-grid');
+  if (!allStaff.length) {
+    el.innerHTML = `<div class="empty-state" style="grid-column:span 3">
+      <div class="empty-state-icon">👥</div>
+      <div class="empty-state-title">No staff yet</div>
+      <div class="empty-state-desc">Add your team members to get started.</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = allStaff.map(s => {
+    const color = ROLE_COLORS[s.role] || '#565656';
+    const hasPin = !!s.pin_hash;
+    return `
+  <div class="staff-card ${!s.active?'inactive':''}">
+    <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px">
+      <div class="avatar" style="background:${color}">${getInitials(s.name)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700;color:var(--text)">${s.name}</div>
+        <div style="margin-top:4px">
+          <span class="role-pill" style="background:${color}18;color:${color};border:0.5px solid ${color}44">
+            ${ROLE_LABELS[s.role]||s.role}
+          </span>
+          ${!s.active?'<span style="font-size:11px;color:var(--text3);margin-left:6px">Inactive</span>':''}
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="openStaffModal('${s.id}')">Edit</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${s.phone?`<div style="font-size:13px">${phoneLink(s.phone)}</div>`:''}
+      ${s.email?`<div style="font-size:12px;color:var(--text2)">✉ ${s.email}</div>`:''}
+      <div style="display:flex;gap:8px;align-items:center;padding:8px 10px;background:var(--bg);border-radius:var(--radius);border:0.5px solid var(--border)">
+        <div style="flex:1">
+          <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:3px">LOGIN METHOD</div>
+          ${hasPin?`<div style="font-size:12px;font-weight:500;color:var(--green)">✓ PIN set</div>`:'<div style="font-size:12px;color:var(--text3)">No PIN</div>'}
+          ${s.auth_user_id?`<div style="font-size:11px;color:var(--brand);margin-top:2px">✓ Email login</div>`:
+            EMAIL_ROLES.includes(s.role)?`<div style="font-size:11px;color:var(--amber);margin-top:2px">⚠ No email auth yet</div>`:''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+  }).join('');
+}
+
+function toggleAuthFields() {
+  const role = document.getElementById('s-role').value;
+  const isPinRole = PIN_ROLES.includes(role);
+  document.getElementById('pin-section').style.display = 'block';
+  document.getElementById('email-auth-section').style.display = EMAIL_ROLES.includes(role) ? 'block' : 'none';
+}
+
+function generatePin() {
+  const pin = Math.floor(1000 + Math.random() * 9000).toString();
+  document.getElementById('s-pin').value = pin;
+  document.getElementById('s-pin').type = 'text';
+  document.getElementById('pin-preview').textContent = `PIN: ${pin} — write this down`;
+  document.getElementById('pin-preview').style.color = 'var(--amber)';
+  setTimeout(() => {
+    document.getElementById('s-pin').type = 'password';
+    document.getElementById('pin-preview').textContent = '';
+  }, 5000);
+}
+
+function openStaffModal(id) {
+  const s = id ? allStaff.find(x => x.id === id) : null;
+  document.getElementById('s-id').value = id || '';
+  document.getElementById('s-name').value = s?.name || '';
+  document.getElementById('s-role').value = s?.role || 'driver';
+  document.getElementById('s-phone').value = s?.phone || '';
+  document.getElementById('s-email').value = s?.email || '';
+  document.getElementById('s-pin').value = '';
+  document.getElementById('s-pin').type = 'password';
+  document.getElementById('pin-preview').textContent = '';
+  document.getElementById('s-active').checked = s ? s.active : true;
+  document.getElementById('modal-staff-title').textContent = id ? 'Edit Staff Member' : 'Add Staff Member';
+  document.getElementById('s-delete-btn').style.display = id ? 'block' : 'none';
+  toggleAuthFields();
+  document.getElementById('modal-staff').style.display = 'flex';
+}
+
+async function hashPin(pin) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(pin);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function saveStaff() {
+  const id   = document.getElementById('s-id').value;
+  const name = document.getElementById('s-name').value.trim();
+  const pin  = document.getElementById('s-pin').value.trim();
+  if (!name) { showToast('Name required', 'error'); return; }
+
+  const obj = {
+    branch_id: App.branchId,
+    name,
+    role:     document.getElementById('s-role').value,
+    phone:    document.getElementById('s-phone').value.trim() || null,
+    email:    document.getElementById('s-email').value.trim() || null,
+    active:   document.getElementById('s-active').checked,
+  };
+
+  // Hash PIN if provided
+  if (pin) {
+    if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+      showToast('PIN must be exactly 4 digits', 'error'); return;
+    }
+    obj.pin_hash = await hashPin(pin);
+  }
+
+  if (id) {
+    const { error } = await sb.from('staff').update(obj).eq('id', id);
+    if (error) { showToast('Save failed: ' + error.message, 'error'); return; }
+  } else {
+    const { error } = await sb.from('staff').insert(obj);
+    if (error) { showToast('Save failed: ' + error.message, 'error'); return; }
+  }
+
+  closeModal('modal-staff');
+  showToast(id ? 'Staff updated ✓' : 'Staff added ✓');
+  await loadStaff();
+}
+
+async function deleteStaff() {
+  const id = document.getElementById('s-id').value;
+  const s  = allStaff.find(x => x.id === id);
+  if (!id || !confirm(`Delete ${s?.name}? This cannot be undone.`)) return;
+  const { error } = await sb.from('staff').delete().eq('id', id);
+  if (error) { showToast('Could not delete: ' + error.message, 'error'); return; }
+  closeModal('modal-staff');
+  showToast('Staff member deleted');
+  await loadStaff();
+}
+
+init();
+</script>
+</body>
+</html>

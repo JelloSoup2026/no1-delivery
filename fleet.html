@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.1 Delivery — Fleet</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+.vehicle-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;position:relative;overflow:hidden;transition:border .15s}
+.vehicle-card:hover{border-color:var(--border2)}
+.vehicle-card.truck{border-top:3px solid var(--brand)}
+.vehicle-card.ute{border-top:3px solid var(--teal)}
+.vehicle-card.inactive{opacity:.55}
+.vehicle-type-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px;border:0.5px solid}
+.truck-badge{background:rgba(0,71,159,.08);color:var(--brand);border-color:var(--brand-pale)}
+.ute-badge{background:var(--teal-bg);color:var(--teal);border-color:var(--teal-border)}
+.vehicle-stat{display:flex;flex-direction:column;gap:2px}
+.vehicle-stat-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;text-transform:uppercase}
+.vehicle-stat-val{font-size:13px;font-weight:500;color:var(--text)}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div id="topbar"></div>
+<div class="page-wrap">
+
+  <div class="section-header" style="margin-bottom:20px">
+    <div>
+      <div class="section-title">Fleet</div>
+      <div class="section-sub" id="fleet-sub">Loading...</div>
+    </div>
+    <button class="btn btn-primary" onclick="openVehicleModal()">+ Add Vehicle</button>
+  </div>
+
+  <!-- STATS -->
+  <div class="stat-row" id="fleet-stats"></div>
+
+  <!-- VEHICLES GRID -->
+  <div class="grid3" id="vehicles-grid"></div>
+
+</div>
+
+<!-- VEHICLE MODAL -->
+<div id="modal-vehicle" class="modal-overlay" style="display:none" onclick="closeModal('modal-vehicle',event)">
+<div class="modal" onclick="event.stopPropagation()">
+  <div class="modal-header">
+    <div class="modal-title" id="modal-vehicle-title">Add Vehicle</div>
+    <button class="modal-close" onclick="closeModal('modal-vehicle')">&times;</button>
+  </div>
+  <input type="hidden" id="v-id">
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Vehicle name</div>
+        <input class="form-input" id="v-name" placeholder="e.g. Truck 1">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Registration</div>
+        <input class="form-input mono" id="v-rego" placeholder="e.g. ABC 123" style="font-weight:600;color:var(--brand)">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Type</div>
+        <select class="form-select" id="v-type" onchange="updateMaxLen()">
+          <option value="truck_9m">🚛 9m Truck</option>
+          <option value="ute">🚐 Ute</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Max item length (mm)</div>
+        <input class="form-input mono" type="number" id="v-maxlen" value="9000" style="font-weight:600">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Default driver name</div>
+        <input class="form-input" id="v-driver" placeholder="e.g. Mike Johnson">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Driver contact</div>
+        <input class="form-input" id="v-contact" placeholder="04XX XXX XXX">
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Capacity notes</div>
+      <input class="form-input" id="v-capacity" placeholder="e.g. 3 tonne, 50 sheets max">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Notes</div>
+      <textarea class="form-textarea" id="v-notes" rows="2" placeholder="Service dates, restrictions, anything else..."></textarea>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="v-active" checked style="width:16px;height:16px;cursor:pointer">
+      <label for="v-active" style="font-size:13px;color:var(--text2);cursor:pointer">Active — appears in run planner</label>
+    </div>
+    <div class="divider"></div>
+    <div style="display:flex;gap:8px;justify-content:space-between">
+      <button class="btn btn-danger btn-sm" id="v-delete-btn" style="display:none" onclick="deleteVehicle()">Delete</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-ghost" onclick="closeModal('modal-vehicle')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveVehicle()">Save Vehicle</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+let allVehicles = [];
+
+async function init() {
+  const ok = await initApp(['super_admin','branch_manager','planner']);
+  if (!ok) return;
+  renderTopbar('fleet');
+  await loadVehicles();
+}
+
+async function loadVehicles() {
+  const { data, error } = await sb.from('vehicles')
+    .select('*')
+    .order('type').order('name');
+  if (error) { showToast('Could not load vehicles', 'error'); return; }
+  allVehicles = data || [];
+  renderStats();
+  renderVehicles();
+}
+
+function renderStats() {
+  const trucks  = allVehicles.filter(v => v.type === 'truck_9m' && v.active);
+  const utes    = allVehicles.filter(v => v.type === 'ute' && v.active);
+  const inactive = allVehicles.filter(v => !v.active);
+  document.getElementById('fleet-sub').textContent =
+    `${allVehicles.length} vehicle${allVehicles.length!==1?'s':''} · ${trucks.length} truck${trucks.length!==1?'s':''} · ${utes.length} ute${utes.length!==1?'s':''}`;
+  document.getElementById('fleet-stats').innerHTML = [
+    { label:'9m Trucks',      val: trucks.length,   color:'var(--brand)' },
+    { label:'Utes',           val: utes.length,     color:'var(--teal)' },
+    { label:'Inactive',       val: inactive.length, color:'var(--text3)' },
+  ].map(s => `
+    <div class="stat-card">
+      <div class="stat-val" style="color:${s.color};font-size:28px;font-weight:700;line-height:1;margin-bottom:4px">${s.val}</div>
+      <div style="font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.3px;text-transform:uppercase">${s.label}</div>
+    </div>`).join('');
+}
+
+function renderVehicles() {
+  const el = document.getElementById('vehicles-grid');
+  if (!allVehicles.length) {
+    el.innerHTML = `<div class="empty-state" style="grid-column:span 3">
+      <div class="empty-state-icon">🚛</div>
+      <div class="empty-state-title">No vehicles yet</div>
+      <div class="empty-state-desc">Add your trucks and utes to get started.</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = allVehicles.map(v => `
+  <div class="vehicle-card ${v.type==='truck_9m'?'truck':'ute'} ${!v.active?'inactive':''}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:14px">
+      <div>
+        <div style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px">${v.name}</div>
+        <div class="vehicle-type-badge ${v.type==='truck_9m'?'truck-badge':'ute-badge'}">
+          ${v.type==='truck_9m'?'🚛 9m Truck':'🚐 Ute'}
+        </div>
+        ${!v.active?'<span style="font-size:11px;color:var(--text3);margin-left:6px">Inactive</span>':''}
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="openVehicleModal('${v.id}')">Edit</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div class="vehicle-stat">
+        <div class="vehicle-stat-label">Rego</div>
+        <div class="vehicle-stat-val mono" style="color:var(--brand);font-weight:700">${v.rego||'—'}</div>
+      </div>
+      <div class="vehicle-stat">
+        <div class="vehicle-stat-label">Max length</div>
+        <div class="vehicle-stat-val" style="color:${v.max_length_mm>6000?'var(--brand)':'var(--teal)'};font-weight:700">${fmtLen(v.max_length_mm)}</div>
+      </div>
+      ${v.capacity_notes?`
+      <div class="vehicle-stat" style="grid-column:span 2">
+        <div class="vehicle-stat-label">Capacity</div>
+        <div class="vehicle-stat-val">${v.capacity_notes}</div>
+      </div>`:''}
+    </div>
+    ${v.driver?`
+    <div style="background:var(--bg);border-radius:var(--radius);padding:10px 12px;border:0.5px solid var(--border)">
+      <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:6px">DEFAULT DRIVER</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text)">${v.driver}</div>
+      ${v.contact?`<div style="margin-top:4px">${phoneLink(v.contact)}</div>`:''}
+    </div>`:''}
+    ${v.notes?`<div style="font-size:11px;color:var(--text3);margin-top:10px;font-style:italic">📝 ${v.notes}</div>`:''}
+  </div>`).join('');
+}
+
+function updateMaxLen() {
+  const type = document.getElementById('v-type').value;
+  document.getElementById('v-maxlen').value = type === 'ute' ? 6000 : 9000;
+}
+
+function openVehicleModal(id) {
+  const v = id ? allVehicles.find(x => x.id === id) : null;
+  document.getElementById('v-id').value = id || '';
+  document.getElementById('v-name').value = v?.name || '';
+  document.getElementById('v-rego').value = v?.rego || '';
+  document.getElementById('v-type').value = v?.type || 'truck_9m';
+  document.getElementById('v-maxlen').value = v?.max_length_mm || 9000;
+  document.getElementById('v-driver').value = v?.driver || '';
+  document.getElementById('v-contact').value = v?.contact || '';
+  document.getElementById('v-capacity').value = v?.capacity_notes || '';
+  document.getElementById('v-notes').value = v?.notes || '';
+  document.getElementById('v-active').checked = v ? v.active : true;
+  document.getElementById('modal-vehicle-title').textContent = id ? 'Edit Vehicle' : 'Add Vehicle';
+  document.getElementById('v-delete-btn').style.display = id ? 'block' : 'none';
+  document.getElementById('modal-vehicle').style.display = 'flex';
+}
+
+async function saveVehicle() {
+  const id = document.getElementById('v-id').value;
+  const name = document.getElementById('v-name').value.trim();
+  if (!name) { showToast('Vehicle name required', 'error'); return; }
+  const obj = {
+    branch_id:      App.branchId,
+    name,
+    rego:           document.getElementById('v-rego').value.trim() || null,
+    type:           document.getElementById('v-type').value,
+    max_length_mm:  parseInt(document.getElementById('v-maxlen').value) || 9000,
+    driver:         document.getElementById('v-driver').value.trim() || null,
+    contact:        document.getElementById('v-contact').value.trim() || null,
+    capacity_notes: document.getElementById('v-capacity').value.trim() || null,
+    notes:          document.getElementById('v-notes').value.trim() || null,
+    active:         document.getElementById('v-active').checked,
+  };
+  if (id) {
+    const { error } = await sb.from('vehicles').update(obj).eq('id', id);
+    if (error) { showToast('Save failed: ' + error.message, 'error'); return; }
+  } else {
+    const { error } = await sb.from('vehicles').insert(obj);
+    if (error) { showToast('Save failed: ' + error.message, 'error'); return; }
+  }
+  closeModal('modal-vehicle');
+  showToast(id ? 'Vehicle updated ✓' : 'Vehicle added ✓');
+  await loadVehicles();
+}
+
+async function deleteVehicle() {
+  const id = document.getElementById('v-id').value;
+  if (!id || !confirm('Delete this vehicle? This cannot be undone.')) return;
+  const { error } = await sb.from('vehicles').delete().eq('id', id);
+  if (error) { showToast('Could not delete: ' + error.message, 'error'); return; }
+  closeModal('modal-vehicle');
+  showToast('Vehicle deleted');
+  await loadVehicles();
+}
+
+function fmtLen(mm) {
+  if (!mm && mm !== 0) return '—';
+  return (mm / 1000).toFixed(3).replace(/\.?0+$/, '') + 'm';
+}
+
+init();
+</script>
+</body>
+</html>
