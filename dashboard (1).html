@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.1 Delivery — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+.stat-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px;position:relative;overflow:hidden}
+.stat-card-accent{position:absolute;top:0;left:0;right:0;height:3px}
+.stat-val{font-size:32px;font-weight:700;line-height:1;margin-bottom:4px}
+.stat-label{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.4px;text-transform:uppercase}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.job-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:8px;transition:border .15s;position:relative}
+.job-card:hover{border-color:var(--border2)}
+.job-card.priority{border-left:3px solid var(--amber-border)}
+.job-card.recovery{border-left:3px solid var(--red-border)}
+.job-card.shed{border-left:3px solid var(--teal-border)}
+.job-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.job-card-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.job-card-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.run-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:10px}
+.run-card-header{background:var(--brand);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.run-card-title{font-size:13px;font-weight:700;color:#fff}
+.run-card-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
+.run-stop-row{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:0.5px solid var(--border)}
+.run-stop-row:last-child{border-bottom:none}
+.stop-num{width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.stop-num.done{background:var(--green)}
+.notif-item{display:flex;gap:10px;padding:10px 14px;border-bottom:0.5px solid var(--border);align-items:flex-start;cursor:pointer;transition:background .15s}
+.notif-item:last-child{border-bottom:none}
+.notif-item:hover{background:var(--bg)}
+.notif-item.unread{background:rgba(0,71,159,.03)}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--brand);flex-shrink:0;margin-top:5px}
+.notif-dot.read{background:var(--border)}
+.shed-upcoming{background:var(--teal-bg);border:0.5px solid var(--teal-border);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:8px}
+.shed-upcoming-title{font-size:12px;font-weight:600;color:var(--teal);margin-bottom:2px}
+.shed-upcoming-sub{font-size:11px;color:var(--teal);opacity:.8}
+.quick-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.quick-stat{font-size:11px;color:var(--text2);background:var(--bg);padding:3px 8px;border-radius:20px;border:0.5px solid var(--border)}
+</style>
+</head>
+<body>
+<div id="topbar"></div>
+<div class="page-wrap">
+
+  <!-- HEADER -->
+  <div class="section-header" style="margin-bottom:20px">
+    <div>
+      <div class="section-title" id="dash-greeting">Good morning</div>
+      <div class="section-sub" id="dash-date"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="window.location.href='jobs.html'">View all jobs</button>
+      <button class="btn btn-primary" onclick="openNewJobModal()">+ New Job</button>
+    </div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="grid5" id="stat-cards" style="margin-bottom:20px"></div>
+
+  <!-- MAIN GRID -->
+  <div class="grid2" style="gap:20px">
+
+    <!-- LEFT COLUMN -->
+    <div>
+      <!-- PRIORITY & RECOVERY -->
+      <div class="section-header">
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text)">Needs attention</div>
+          <div style="font-size:12px;color:var(--text3)">Priority and recovery jobs</div>
+        </div>
+        <span id="urgent-count" class="tag tag-warn" style="display:none"></span>
+      </div>
+      <div id="urgent-jobs">
+        <div class="loading-wrap"><div class="spinner"></div>Loading...</div>
+      </div>
+
+      <!-- SHED UPCOMING -->
+      <div class="section-header" style="margin-top:20px">
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text)">Shed deliveries due soon</div>
+          <div style="font-size:12px;color:var(--text3)">Next 14 days</div>
+        </div>
+        <a href="calendar.html" style="font-size:12px;color:var(--brand);font-weight:500">View calendar →</a>
+      </div>
+      <div id="shed-upcoming">
+        <div class="loading-wrap"><div class="spinner"></div>Loading...</div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+      <!-- TODAY'S RUNS -->
+      <div class="section-header">
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text)">Today's runs</div>
+          <div style="font-size:12px;color:var(--text3)" id="runs-date"></div>
+        </div>
+        <a href="runs.html" style="font-size:12px;color:var(--brand);font-weight:500">Run planner →</a>
+      </div>
+      <div id="todays-runs">
+        <div class="loading-wrap"><div class="spinner"></div>Loading...</div>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div class="section-header" style="margin-top:20px">
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text)">Notifications</div>
+          <div style="font-size:12px;color:var(--text3)" id="notif-sub">Loading...</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="markAllRead()">Mark all read</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden" id="notifications-list">
+        <div class="loading-wrap"><div class="spinner"></div>Loading...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- NEW JOB MODAL -->
+<div id="modal-job" class="modal-overlay" style="display:none" onclick="closeModal('modal-job',event)">
+<div class="modal" onclick="event.stopPropagation()">
+  <div class="modal-header">
+    <div class="modal-title" id="modal-job-title">New Job</div>
+    <button class="modal-close" onclick="closeModal('modal-job')">&times;</button>
+  </div>
+  <input type="hidden" id="job-id">
+  <div style="display:flex;flex-direction:column;gap:14px">
+
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Invoice #</div>
+        <input class="form-input mono" id="job-invoice" placeholder="INV-0001" style="font-weight:700;color:var(--brand)">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Job type</div>
+        <select class="form-select" id="job-type">
+          <option value="standard">📦 Standard delivery</option>
+          <option value="priority">⚡ Priority — 7am</option>
+          <option value="recovery">🔴 Recovery</option>
+          <option value="shed">🏠 Shed</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Customer name</div>
+        <input class="form-input" id="job-customer" placeholder="e.g. John Smith">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Phone</div>
+        <input class="form-input" id="job-phone" placeholder="04XX XXX XXX">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Delivery address</div>
+      <input class="form-input" id="job-address" placeholder="e.g. 42 Smith St, Penrith NSW 2750">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Suburb</div>
+        <input class="form-input" id="job-suburb" placeholder="e.g. Penrith">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Postcode</div>
+        <input class="form-input" id="job-postcode" placeholder="e.g. 2750" maxlength="4">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Region</div>
+        <select class="form-select" id="job-region">
+          <option value="sydney-metro">Sydney Metro</option>
+          <option value="regional-nsw">Regional NSW</option>
+          <option value="act">ACT</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Delivery date</div>
+        <input class="form-input" type="date" id="job-del-date">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Run slot</div>
+        <select class="form-select" id="job-run-slot">
+          <option value="unassigned">Unassigned</option>
+          <option value="1st">1st Run</option>
+          <option value="2nd">2nd Run</option>
+          <option value="3rd">3rd Run</option>
+          <option value="4th">4th Run</option>
+          <option value="5th">5th Run</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Entered by</div>
+        <input class="form-input" id="job-entered-by" value="" readonly style="background:var(--bg);color:var(--text2)">
+      </div>
+    </div>
+
+    <!-- PO Section -->
+    <div style="background:var(--teal-bg);border:0.5px solid var(--teal-border);border-radius:var(--radius);padding:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--teal);margin-bottom:8px;letter-spacing:.3px">SUPPLIER COLLECTION (optional)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <div class="form-label">PO Number</div>
+          <input class="form-input mono" id="job-po" placeholder="PO-0001" style="font-weight:600">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Supplier name</div>
+          <input class="form-input" id="job-supplier" placeholder="e.g. BlueScope Steel">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:8px">
+        <div class="form-label">Supplier address</div>
+        <input class="form-input" id="job-supplier-addr" placeholder="e.g. 5 Industrial Rd, Wetherill Park">
+      </div>
+    </div>
+
+    <!-- ITEMS -->
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="form-label">Order items</div>
+        <button class="btn btn-ghost btn-sm" onclick="addItemRow()">+ Add item</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 72px 104px 28px;gap:6px;margin-bottom:4px;padding:0 2px">
+        <span style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px">PRODUCT</span>
+        <span style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px">QTY</span>
+        <span style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px">LENGTH (mm)</span>
+        <span></span>
+      </div>
+      <div id="items-container"></div>
+      <div id="max-len-display" style="font-size:12px;color:var(--text2);margin-top:6px;min-height:18px"></div>
+    </div>
+
+    <!-- SHED DATES -->
+    <div id="shed-dates" style="display:none;background:var(--teal-bg);border:0.5px solid var(--teal-border);border-radius:var(--radius);padding:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--teal);margin-bottom:8px;letter-spacing:.3px">SHED DELIVERY WINDOW</div>
+      <div class="form-row">
+        <div class="form-group">
+          <div class="form-label">Order date</div>
+          <input class="form-input" type="date" id="job-shed-order">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Due from</div>
+          <input class="form-input" type="date" id="job-shed-from">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:8px">
+        <div class="form-label">Due by</div>
+        <input class="form-input" type="date" id="job-shed-to">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Notes</div>
+      <textarea class="form-textarea" id="job-notes" rows="2" placeholder="Special instructions, access info, etc."></textarea>
+    </div>
+
+    <div class="divider"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-job')">Cancel</button>
+      <button class="btn btn-primary" id="save-job-btn" onclick="saveJob()">Save Job</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ADVANCE STATUS MODAL -->
+<div id="modal-advance" class="modal-overlay" style="display:none" onclick="closeModal('modal-advance',event)">
+<div class="modal" style="max-width:420px" onclick="event.stopPropagation()">
+  <div class="modal-header">
+    <div class="modal-title" id="advance-title">Update status</div>
+    <button class="modal-close" onclick="closeModal('modal-advance')">&times;</button>
+  </div>
+  <input type="hidden" id="advance-job-id">
+  <div id="advance-body"></div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+<script>
+let itemRows = [];
+let dashJobs = [];
+let dashRuns = [];
+
+async function init() {
+  const ok = await initApp(['super_admin','branch_manager','planner']);
+  if (!ok) return;
+  renderTopbar('dashboard');
+  setGreeting();
+  await Promise.all([
+    loadStats(),
+    loadUrgentJobs(),
+    loadShedUpcoming(),
+    loadTodaysRuns(),
+    loadNotifications(),
+  ]);
+  // Prefill entered-by field
+  document.getElementById('job-entered-by').value = App.staff?.name || '';
+  document.getElementById('job-del-date').value = todayStr();
+}
+
+function setGreeting() {
+  const hr = new Date().getHours();
+  const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('dash-greeting').textContent = `${greet}, ${App.staff?.name || ''}`;
+  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-AU', {
+    weekday:'long', day:'numeric', month:'long', year:'numeric'
+  });
+  document.getElementById('runs-date').textContent = new Date().toLocaleDateString('en-AU', {
+    weekday:'long', day:'numeric', month:'long'
+  });
+}
+
+// ---- STATS ----
+async function loadStats() {
+  const { data: jobs } = await sb.from('jobs').select('status,type');
+  if (!jobs) return;
+  const total    = jobs.length;
+  const undel    = jobs.filter(j => j.status !== 'delivered').length;
+  const priority = jobs.filter(j => j.type === 'priority' && j.status !== 'delivered').length;
+  const recovery = jobs.filter(j => j.type === 'recovery' && j.status !== 'delivered').length;
+  const shed     = jobs.filter(j => j.type === 'shed' && j.status !== 'delivered').length;
+
+  document.getElementById('stat-cards').innerHTML = [
+    { label:'Total jobs',   val:total,    color:'var(--brand)',        accent:'var(--brand)' },
+    { label:'Undelivered',  val:undel,    color:'var(--amber)',        accent:'var(--amber-border)' },
+    { label:'Priority 7am', val:priority, color:'var(--amber)',        accent:'var(--amber-border)' },
+    { label:'Recoveries',   val:recovery, color:'var(--red)',          accent:'var(--red-border)' },
+    { label:'Shed jobs',    val:shed,     color:'var(--teal)',         accent:'var(--teal-border)' },
+  ].map(s => `
+    <div class="stat-card">
+      <div class="stat-card-accent" style="background:${s.accent}"></div>
+      <div class="stat-val" style="color:${s.color}">${s.val}</div>
+      <div class="stat-label">${s.label}</div>
+    </div>`).join('');
+}
+
+// ---- URGENT JOBS ----
+async function loadUrgentJobs() {
+  const { data: jobs } = await sb.from('jobs')
+    .select('*, job_items(*)')
+    .in('type', ['priority','recovery'])
+    .neq('status', 'delivered')
+    .order('type')
+    .order('delivery_date');
+
+  dashJobs = jobs || [];
+  const el = document.getElementById('urgent-jobs');
+  const cnt = document.getElementById('urgent-count');
+
+  if (!jobs || !jobs.length) {
+    cnt.style.display = 'none';
+    el.innerHTML = `<div class="card" style="text-align:center;padding:24px;color:var(--text3)">
+      <div style="font-size:24px;margin-bottom:8px">✓</div>
+      <div style="font-size:13px">No priority or recovery jobs pending</div>
+    </div>`;
+    return;
+  }
+
+  cnt.textContent = `${jobs.length} job${jobs.length !== 1 ? 's' : ''}`;
+  cnt.style.display = 'inline-flex';
+  el.innerHTML = jobs.map(j => jobCardHTML(j, true)).join('');
+}
+
+// ---- SHED UPCOMING ----
+async function loadShedUpcoming() {
+  const from = todayStr();
+  const to = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
+
+  const { data: jobs } = await sb.from('jobs')
+    .select('id,invoice_number,customer_name,customer_phone,suburb,shed_due_from,shed_due_to,status')
+    .eq('type', 'shed')
+    .neq('status', 'delivered')
+    .or(`shed_due_to.gte.${from},shed_due_from.lte.${to}`)
+    .order('shed_due_from');
+
+  const el = document.getElementById('shed-upcoming');
+  if (!jobs || !jobs.length) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--text3);padding:12px 0">No shed deliveries due in the next 14 days.</div>`;
+    return;
+  }
+
+  el.innerHTML = jobs.map(j => `
+    <div class="shed-upcoming">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div>
+          <div class="invoice-num">${j.invoice_number}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">${j.customer_name}</div>
+          <div style="font-size:11px;color:var(--teal);margin-top:3px">${j.suburb || ''}</div>
+        </div>
+        <div style="text-align:right">
+          ${statusPill(j.status)}
+          <div style="font-size:11px;color:var(--teal);margin-top:4px;font-weight:500">
+            ${j.shed_due_from ? fmtDate(j.shed_due_from) : '—'} → ${j.shed_due_to ? fmtDate(j.shed_due_to) : '—'}
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ---- TODAY'S RUNS ----
+async function loadTodaysRuns() {
+  const today = todayStr();
+  const { data: runs } = await sb.from('runs')
+    .select(`
+      *,
+      vehicles(name,type,max_length_mm),
+      driver:staff!runs_driver_id_fkey(name,phone),
+      run_jobs(stop_order, jobs(id,invoice_number,customer_name,suburb,address_raw,status,type,customer_phone,max_item_length_mm))
+    `)
+    .eq('date', today)
+    .order('slot');
+
+  dashRuns = runs || [];
+  const el = document.getElementById('todays-runs');
+
+  if (!runs || !runs.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:24px;color:var(--text3)">
+      <div style="font-size:24px;margin-bottom:8px">🚛</div>
+      <div style="font-size:13px">No runs scheduled for today</div>
+      <a href="runs.html" style="font-size:12px;color:var(--brand);font-weight:500;display:block;margin-top:8px">Go to run planner →</a>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = runs.map(r => {
+    const jobs = (r.run_jobs || [])
+      .sort((a, b) => a.stop_order - b.stop_order)
+      .map(rj => rj.jobs)
+      .filter(Boolean);
+    const delivered = jobs.filter(j => j.status === 'delivered').length;
+    const hasPriority = jobs.some(j => j.type === 'priority');
+    const hasRecovery = jobs.some(j => j.type === 'recovery');
+
+    return `
+    <div class="run-card">
+      <div class="run-card-header">
+        <div>
+          <div class="run-card-title">${r.slot} Run — ${r.vehicles?.name || 'Vehicle TBA'}</div>
+          <div class="run-card-sub">
+            Driver: ${r.driver?.name || 'TBA'}${r.driver?.phone ? ' · 📞 ' + r.driver.phone : ''}
+            · ${jobs.length} stop${jobs.length !== 1 ? 's' : ''}
+            · ${delivered}/${jobs.length} delivered
+            ${hasPriority ? ' · <span style="color:var(--amber-border);font-weight:700">⚡ Priority</span>' : ''}
+            ${hasRecovery ? ' · <span style="color:var(--red-border);font-weight:700">🔴 Recovery</span>' : ''}
+          </div>
+          ${r.departed_at ? `<div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:3px">Left yard: ${fmtDateTime(r.departed_at)}</div>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          ${r.status !== 'departed' && r.status !== 'complete' ? `
+            <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.3)" onclick="departRun('${r.id}')">🚛 Depart</button>
+          ` : r.status === 'complete' ? `
+            <span style="font-size:11px;color:rgba(255,255,255,.8);font-weight:600">✓ Complete</span>
+          ` : `
+            <span style="font-size:11px;color:rgba(255,255,255,.8)">▶ On road</span>
+          `}
+        </div>
+      </div>
+      ${jobs.slice(0, 4).map((j, i) => `
+        <div class="run-stop-row">
+          <div class="stop-num ${j.status === 'delivered' ? 'done' : ''}">${j.status === 'delivered' ? '✓' : i + 1}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+              <div>
+                <span class="invoice-num">${j.invoice_number}</span>
+                <span style="font-size:13px;font-weight:600;color:var(--text);margin-left:8px">${j.customer_name}</span>
+              </div>
+              <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+                ${statusPill(j.status)}
+                ${typeTag(j.type)}
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <span>${j.suburb || ''}</span>
+              ${j.customer_phone ? phoneLink(j.customer_phone) : ''}
+              ${mapsLink(j.address_raw)}
+            </div>
+          </div>
+        </div>`).join('')}
+      ${jobs.length > 4 ? `<div style="padding:8px 14px;font-size:12px;color:var(--text3);text-align:center">+ ${jobs.length - 4} more stops — <a href="runs.html" style="color:var(--brand);font-weight:500">view full run</a></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ---- NOTIFICATIONS ----
+async function loadNotifications() {
+  const { data: notifs } = await sb.from('notifications')
+    .select('*')
+    .eq('recipient_id', App.staffId)
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  const el = document.getElementById('notifications-list');
+  const unread = (notifs || []).filter(n => !n.read).length;
+  document.getElementById('notif-sub').textContent =
+    unread > 0 ? `${unread} unread` : 'All caught up';
+
+  if (!notifs || !notifs.length) {
+    el.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3);font-size:13px">No notifications yet</div>`;
+    return;
+  }
+
+  el.innerHTML = notifs.map(n => `
+    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markRead('${n.id}')">
+      <div class="notif-dot ${n.read ? 'read' : ''}"></div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:${n.read ? '400' : '600'};color:var(--text)">${n.title}</div>
+        ${n.message ? `<div style="font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4">${n.message}</div>` : ''}
+        <div style="font-size:10px;color:var(--text3);margin-top:3px">${fmtDateTime(n.created_at)}</div>
+      </div>
+    </div>`).join('');
+}
+
+async function markRead(id) {
+  await sb.from('notifications').update({ read: true }).eq('id', id);
+  loadNotifications();
+}
+
+async function markAllRead() {
+  await sb.from('notifications')
+    .update({ read: true })
+    .eq('recipient_id', App.staffId)
+    .eq('read', false);
+  loadNotifications();
+}
+
+// ---- DEPART RUN ----
+async function departRun(runId) {
+  if (!confirm('Mark this run as departed from the yard?')) return;
+  const { error } = await sb.from('runs')
+    .update({ status: 'departed', departed_at: new Date().toISOString() })
+    .eq('id', runId);
+  if (error) { showToast('Could not update run', 'error'); return; }
+  // Also update all loaded jobs on this run to departed
+  const { data: rj } = await sb.from('run_jobs').select('job_id').eq('run_id', runId);
+  if (rj && rj.length) {
+    const ids = rj.map(r => r.job_id);
+    await sb.from('jobs')
+      .update({ status: 'departed', departed_at: new Date().toISOString() })
+      .in('id', ids)
+      .eq('status', 'loaded');
+  }
+  showToast('Run marked as departed');
+  loadTodaysRuns();
+}
+
+// ---- JOB CARD HTML ----
+function jobCardHTML(j, showActions = true) {
+  const typeCls = j.type !== 'standard' ? j.type : '';
+  const items = j.job_items || [];
+  const maxLen = j.max_item_length_mm || 0;
+  return `
+  <div class="job-card ${typeCls}">
+    <div class="job-card-header">
+      <div>
+        <div class="invoice-num">${j.invoice_number}</div>
+        <div style="font-size:15px;font-weight:600;color:var(--text);margin-top:2px">${j.customer_name}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">${j.suburb_raw || ''}${j.address_raw ? ' — ' + j.address_raw : ''}</div>
+        ${j.customer_phone ? `<div style="margin-top:4px">${phoneLink(j.customer_phone)}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+        ${statusPill(j.status)}
+        ${typeTag(j.type)}
+        ${j.run_slot && j.run_slot !== 'unassigned' ? `<span style="font-size:10px;color:var(--text3)">${j.run_slot} run</span>` : ''}
+      </div>
+    </div>
+    ${items.length ? `<div style="font-size:12px;color:var(--text2)">${items.map(i => `<span style="margin-right:10px"><strong style="color:var(--text)">${i.quantity}×${fmtLen(i.length_mm)}</strong> ${i.product_name}</span>`).join('')}</div>` : ''}
+    ${maxLen > 6000 ? `<div style="margin-top:6px"><span class="tag tag-warn">9m truck required</span></div>` : ''}
+    ${j.po_number ? `<div style="margin-top:6px"><span class="tag tag-po">PO: ${j.po_number}</span>${j.supplier_name ? ' ' + j.supplier_name : ''}</div>` : ''}
+    ${j.notes ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;font-style:italic">📝 ${j.notes}</div>` : ''}
+    ${showActions && !j.locked ? `
+    <div class="job-card-actions">
+      ${j.status !== 'delivered' ? `<button class="btn btn-primary btn-sm" onclick="openAdvanceModal('${j.id}')">→ ${JOB_STATUSES[STATUS_NEXT[j.status]]?.label || ''}</button>` : ''}
+      <button class="btn btn-ghost btn-sm" onclick="openEditJob('${j.id}')">Edit</button>
+      ${mapsLink(j.address_raw)}
+    </div>` : ''}
+    ${j.locked ? `<div style="font-size:11px;color:var(--green);margin-top:8px;font-weight:600">✓ Delivered &amp; locked — ${fmtDateTime(j.delivered_at)}</div>` : ''}
+  </div>`;
+}
+
+// ---- ADVANCE STATUS MODAL ----
+async function openAdvanceModal(jobId) {
+  const j = dashJobs.find(x => x.id === jobId);
+  if (!j) return;
+  const next = STATUS_NEXT[j.status];
+  if (!next) return;
+
+  document.getElementById('advance-job-id').value = jobId;
+  document.getElementById('advance-title').textContent = `${j.invoice_number} — ${j.customer_name}`;
+
+  let body = `<div style="margin-bottom:16px;font-size:13px;color:var(--text2)">Moving from <strong>${JOB_STATUSES[j.status]?.label}</strong> → <strong style="color:var(--brand)">${JOB_STATUSES[next]?.label}</strong></div>`;
+
+  if (next === 'picked') {
+    body += `<div class="form-group" style="margin-bottom:16px">
+      <div class="form-label">Picked by</div>
+      <input class="form-input" id="adv-picker" placeholder="Name of picker" value="${App.staff?.name || ''}">
+    </div>`;
+  }
+  if (next === 'loaded') {
+    body += `<div class="form-group" style="margin-bottom:16px">
+      <div class="form-label">Loaded by</div>
+      <input class="form-input" id="adv-loader" placeholder="Name of loader" value="${App.staff?.name || ''}">
+    </div>`;
+  }
+
+  body += `<div class="divider"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-advance')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAdvance('${jobId}','${next}')">Confirm → ${JOB_STATUSES[next]?.label}</button>
+    </div>`;
+
+  document.getElementById('advance-body').innerHTML = body;
+  document.getElementById('modal-advance').style.display = 'flex';
+}
+
+async function confirmAdvance(jobId, nextStatus) {
+  const updates = { status: nextStatus };
+  const pickerEl = document.getElementById('adv-picker');
+  const loaderEl = document.getElementById('adv-loader');
+  if (pickerEl) updates.picked_by = pickerEl.value.trim() || App.staffId;
+  if (loaderEl) updates.loaded_by = loaderEl.value.trim() || App.staffId;
+
+  const { error } = await sb.from('jobs').update(updates).eq('id', jobId);
+  if (error) { showToast('Could not update status', 'error'); return; }
+
+  // Log it
+  await sb.from('job_log').insert({
+    job_id: jobId,
+    action: `Status → ${JOB_STATUSES[nextStatus]?.label}`,
+    performed_by: App.staffId,
+    performed_by_name: App.staff?.name,
+  });
+
+  closeModal('modal-advance');
+  showToast(`Status updated to ${JOB_STATUSES[nextStatus]?.label}`);
+  await Promise.all([loadStats(), loadUrgentJobs()]);
+}
+
+// ---- JOB FORM ----
+let itemRows = [];
+
+function addItemRow(prod = '', qty = 1, len = '') {
+  const id = 'ir' + Date.now() + Math.random().toString(36).slice(2, 5);
+  itemRows.push(id);
+  const d = document.createElement('div');
+  d.id = id;
+  d.style.cssText = 'display:grid;grid-template-columns:1fr 72px 104px 28px;gap:6px;margin-bottom:6px;align-items:center';
+  d.innerHTML = `
+    <input class="form-input" placeholder="e.g. Colorbond sheet" value="${prod}" style="padding:7px 10px;font-size:13px" oninput="updateMaxLen()">
+    <input class="form-input" type="number" min="1" value="${qty}" style="padding:7px 8px;font-size:13px;text-align:center" oninput="updateMaxLen()">
+    <input class="form-input mono" type="number" min="0" value="${len}" placeholder="e.g. 7800" style="padding:7px 8px;font-size:13px;font-weight:600" oninput="updateMaxLen()">
+    <button onclick="removeItem('${id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:0;line-height:1;display:flex;align-items:center;justify-content:center">×</button>`;
+  document.getElementById('items-container').appendChild(d);
+  updateMaxLen();
+}
+
+function removeItem(id) {
+  document.getElementById(id)?.remove();
+  itemRows = itemRows.filter(r => r !== id);
+  updateMaxLen();
+}
+
+function getItems() {
+  return itemRows.map(id => {
+    const row = document.getElementById(id);
+    if (!row) return null;
+    const inputs = row.querySelectorAll('input');
+    return { product_name: inputs[0].value.trim(), quantity: parseInt(inputs[1].value) || 1, length_mm: parseInt(inputs[2].value) || 0 };
+  }).filter(Boolean).filter(i => i.product_name);
+}
+
+function updateMaxLen() {
+  const items = getItems();
+  const max = items.reduce((m, i) => Math.max(m, i.length_mm), 0);
+  const el = document.getElementById('max-len-display');
+  if (!items.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `Max item length: <strong style="color:${max > 6000 ? 'var(--amber)' : 'var(--green)'}">${fmtLen(max)}</strong>${max > 6000 ? ' &nbsp;<span class="tag tag-warn" style="font-size:10px">9m truck required</span>' : ''}`;
+}
+
+// Toggle shed date fields
+document.addEventListener('change', e => {
+  if (e.target.id === 'job-type') {
+    document.getElementById('shed-dates').style.display =
+      e.target.value === 'shed' ? 'block' : 'none';
+  }
+});
+
+function openNewJobModal() {
+  itemRows = [];
+  document.getElementById('job-id').value = '';
+  document.getElementById('modal-job-title').textContent = 'New Job';
+  ['job-invoice','job-customer','job-phone','job-address','job-suburb',
+   'job-postcode','job-po','job-supplier','job-supplier-addr','job-notes',
+   'job-shed-order','job-shed-from','job-shed-to'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('job-type').value = 'standard';
+  document.getElementById('job-region').value = 'sydney-metro';
+  document.getElementById('job-del-date').value = todayStr();
+  document.getElementById('job-run-slot').value = 'unassigned';
+  document.getElementById('job-entered-by').value = App.staff?.name || '';
+  document.getElementById('items-container').innerHTML = '';
+  document.getElementById('max-len-display').innerHTML = '';
+  document.getElementById('shed-dates').style.display = 'none';
+  addItemRow();
+  document.getElementById('modal-job').style.display = 'flex';
+}
+
+async function openEditJob(jobId) {
+  const { data: j } = await sb.from('jobs')
+    .select('*, job_items(*)')
+    .eq('id', jobId)
+    .single();
+  if (!j) return;
+
+  itemRows = [];
+  document.getElementById('items-container').innerHTML = '';
+  document.getElementById('job-id').value = j.id;
+  document.getElementById('modal-job-title').textContent = 'Edit Job';
+  document.getElementById('job-invoice').value = j.invoice_number || '';
+  document.getElementById('job-type').value = j.type || 'standard';
+  document.getElementById('job-customer').value = j.customer_name || '';
+  document.getElementById('job-phone').value = j.customer_phone || '';
+  document.getElementById('job-address').value = j.address_raw || '';
+  document.getElementById('job-suburb').value = j.suburb_raw || '';
+  document.getElementById('job-postcode').value = j.postcode || '';
+  document.getElementById('job-region').value = j.region || 'sydney-metro';
+  document.getElementById('job-del-date').value = j.delivery_date || todayStr();
+  document.getElementById('job-run-slot').value = j.run_slot || 'unassigned';
+  document.getElementById('job-po').value = j.po_number || '';
+  document.getElementById('job-supplier').value = j.supplier_name || '';
+  document.getElementById('job-supplier-addr').value = j.supplier_address || '';
+  document.getElementById('job-notes').value = j.notes || '';
+  document.getElementById('job-shed-order').value = j.shed_order_date || '';
+  document.getElementById('job-shed-from').value = j.shed_due_from || '';
+  document.getElementById('job-shed-to').value = j.shed_due_to || '';
+  document.getElementById('shed-dates').style.display = j.type === 'shed' ? 'block' : 'none';
+  (j.job_items || []).forEach(i => addItemRow(i.product_name, i.quantity, i.length_mm));
+  document.getElementById('modal-job').style.display = 'flex';
+}
+
+async function saveJob() {
+  const id = document.getElementById('job-id').value;
+  const items = getItems();
+  const invoice = document.getElementById('job-invoice').value.trim();
+  const customer = document.getElementById('job-customer').value.trim();
+  if (!invoice) { showToast('Invoice number required', 'error'); return; }
+  if (!customer) { showToast('Customer name required', 'error'); return; }
+  if (!items.length) { showToast('Add at least one item', 'error'); return; }
+
+  const btn = document.getElementById('save-job-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  const maxLen = items.reduce((m, i) => Math.max(m, i.length_mm), 0);
+  const jobData = {
+    branch_id:        App.branchId,
+    invoice_number:   invoice,
+    type:             document.getElementById('job-type').value,
+    customer_name:    customer,
+    customer_phone:   document.getElementById('job-phone').value.trim(),
+    address_raw:      document.getElementById('job-address').value.trim(),
+    suburb_raw:       document.getElementById('job-suburb').value.trim(),
+    postcode:         document.getElementById('job-postcode').value.trim(),
+    region:           document.getElementById('job-region').value,
+    delivery_date:    document.getElementById('job-del-date').value || null,
+    run_slot:         document.getElementById('job-run-slot').value,
+    po_number:        document.getElementById('job-po').value.trim() || null,
+    supplier_name:    document.getElementById('job-supplier').value.trim() || null,
+    supplier_address: document.getElementById('job-supplier-addr').value.trim() || null,
+    notes:            document.getElementById('job-notes').value.trim() || null,
+    shed_order_date:  document.getElementById('job-shed-order').value || null,
+    shed_due_from:    document.getElementById('job-shed-from').value || null,
+    shed_due_to:      document.getElementById('job-shed-to').value || null,
+    max_item_length_mm: maxLen,
+    entered_by:       App.staffId,
+  };
+
+  let jobId = id;
+  if (id) {
+    const { error } = await sb.from('jobs').update(jobData).eq('id', id);
+    if (error) { showToast('Could not save job: ' + error.message, 'error'); btn.disabled = false; btn.textContent = 'Save Job'; return; }
+    await sb.from('job_items').delete().eq('job_id', id);
+  } else {
+    const { data, error } = await sb.from('jobs').insert(jobData).select().single();
+    if (error) { showToast('Could not save job: ' + error.message, 'error'); btn.disabled = false; btn.textContent = 'Save Job'; return; }
+    jobId = data.id;
+    await sb.from('job_log').insert({ job_id: jobId, action: 'Job created', performed_by: App.staffId, performed_by_name: App.staff?.name });
+  }
+
+  // Save items
+  if (items.length) {
+    await sb.from('job_items').insert(items.map(i => ({ ...i, job_id: jobId })));
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Save Job';
+  closeModal('modal-job');
+  showToast(id ? 'Job updated' : 'Job created');
+  await Promise.all([loadStats(), loadUrgentJobs(), loadShedUpcoming()]);
+}
+
+init();
+</script>
+</body>
+</html>
