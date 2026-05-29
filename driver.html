@@ -2,53 +2,172 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>No.1 Delivery — Driver</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--brand:#00479f;--bg:#f0f4f8;--surface:#fff;--border:#b4cbe1;--text:#1a1a2e;--text2:#565656;--text3:#a3a4a4;--green:#1a7a4a;--green-bg:#e8f5ee;--green-border:#7ec8a0;--radius:10px;--radius-lg:16px;--font:'DM Sans',system-ui,sans-serif;}
-body{background:var(--brand);font-family:var(--font);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-.card{background:var(--surface);border-radius:var(--radius-lg);padding:32px;width:100%;max-width:400px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.icon{font-size:48px;margin-bottom:16px}
-.title{font-size:20px;font-weight:600;color:var(--text);margin-bottom:8px}
-.sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px}
-.name-badge{display:inline-block;padding:8px 20px;background:var(--green-bg);border:0.5px solid var(--green-border);border-radius:20px;font-size:13px;font-weight:600;color:var(--green);margin-bottom:20px}
-.stage-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(0,71,159,.08);color:var(--brand);border:0.5px solid #b4cbe1;margin-bottom:20px}
-.btn{width:100%;padding:12px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
-.btn:hover{background:#003a85}
-.status{padding:10px 14px;background:var(--green-bg);border:0.5px solid var(--green-border);border-radius:var(--radius);font-size:12px;color:var(--green);font-weight:500;margin-bottom:16px}
+:root{
+  --brand:#00479f;--brand-mid:#4b7fb9;--brand-pale:#b4cbe1;--brand-surface:#e5ebef;
+  --bg:#f0f4f8;--surface:#fff;--border:#b4cbe1;--border2:#79a1cb;
+  --text:#1a1a2e;--text2:#565656;--text3:#a3a4a4;
+  --green:#1a7a4a;--green-bg:#e8f5ee;--green-border:#7ec8a0;
+  --amber:#8a5a00;--amber-bg:#fef3dc;--amber-border:#f0b429;
+  --red:#b91c1c;--red-bg:#fef2f2;--red-border:#fca5a5;
+  --teal:#0e7490;--teal-bg:#ecfeff;--teal-border:#67e8f9;
+  --radius:10px;--radius-lg:16px;
+  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+}
+body{background:var(--bg);font-family:var(--font);font-size:14px;min-height:100vh;padding-bottom:40px}
+.header{background:var(--brand);padding:16px;position:sticky;top:0;z-index:10}
+.header-brand{font-size:11px;color:rgba(255,255,255,.6);font-weight:500;letter-spacing:.3px}
+.header-title{font-size:17px;font-weight:700;color:#fff;margin-top:2px}
+.header-sub{font-size:12px;color:rgba(255,255,255,.7);margin-top:3px;display:flex;align-items:center;justify-content:space-between}
+.signout-btn{background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:500;padding:4px 10px;cursor:pointer;font-family:var(--font)}
+.content{padding:14px}
+.run-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:14px;overflow:hidden}
+.run-card-header{background:var(--brand);padding:12px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.run-card-title{font-size:14px;font-weight:700;color:#fff}
+.run-card-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:3px}
+.run-progress{height:4px;background:rgba(255,255,255,.2);border-radius:20px;margin-top:10px;overflow:hidden}
+.run-progress-fill{height:100%;background:#fff;border-radius:20px;transition:width .4s}
+.open-run-btn{background:#fff;color:var(--brand);border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;flex-shrink:0}
+.open-run-btn:hover{background:var(--brand-surface)}
+.stop-preview{padding:10px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px}
+.stop-preview:last-child{border-bottom:none}
+.stop-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.stop-info{flex:1;min-width:0}
+.stop-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stop-addr{font-size:11px;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:40px 20px;text-align:center}
+.spinner{display:inline-block;width:24px;height:24px;border:3px solid rgba(0,71,159,.15);border-top-color:var(--brand);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{display:flex;align-items:center;justify-content:center;padding:48px;gap:12px;color:var(--text2);font-size:13px}
+.status-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="icon">🚛
-📦</div>
-  <div class="title">Driver View
-Picker / Loader View</div>
-  <div class="status">✓ Login successful — routing working correctly</div>
-  <div class="name-badge" id="name-badge">Loading...</div>
-  <div class="sub">This will become your run view — stops, maps links, photo upload and status updates. Coming in Stage 5.
-This will become your picking list — all jobs to pick and load for today's runs. Coming in Stage 3.</div>
-  <div class="stage-badge">Stage 5 — Driver View
-Stage 3 — Jobs</div>
-  <button class="btn" onclick="logout()">Sign out</button>
+
+<div class="header">
+  <div class="header-brand">NO.1 DELIVERY · PRESTONS</div>
+  <div class="header-title" id="header-title">Driver Portal</div>
+  <div class="header-sub">
+    <span id="header-date"></span>
+    <button class="signout-btn" onclick="doSignout()">Sign out</button>
+  </div>
 </div>
+
+<div class="content" id="content">
+  <div class="loading"><div class="spinner"></div> Loading your runs...</div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
 <script>
-const SUPABASE_URL='https://mnhwcuawsdxeyzqkjdwq.supabase.co';
-const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uaHdjdWF3c2R4ZXl6cWtqZHdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMjM1ODksImV4cCI6MjA5NTU5OTU4OX0.ALToJk7zpFYRLZPwoAN7d8EHsU6AE0wNKfNxVCoS_tk';
-const {createClient}=supabase;
-const sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-async function init(){
-  const name=sessionStorage.getItem('staff_name');
-  const role=sessionStorage.getItem('staff_role');
-  const pin=sessionStorage.getItem('pin_auth');
-  const {data:{session}}=await sb.auth.getSession();
-  if(!session&&!pin){window.location.href='login.html';return;}
-  document.getElementById('name-badge').textContent='👋 '+( name||'Staff member')+' — logged in';
+const JOB_STATUSES = {
+  unpicked:{label:'Unpicked',color:'#a3a4a4',bg:'#f0f4f8'},
+  picked:{label:'Picked',color:'#8a5a00',bg:'#fef3dc'},
+  loaded:{label:'Loaded',color:'#0e7490',bg:'#ecfeff'},
+  departed:{label:'Departed',color:'#5b21b6',bg:'#f5f3ff'},
+  arrived:{label:'Arrived',color:'#00479f',bg:'#e5ebef'},
+  delivered:{label:'Delivered',color:'#1a7a4a',bg:'#e8f5ee'},
+};
+
+async function init() {
+  const ok = await initApp(['driver']);
+  if (!ok) return;
+
+  document.getElementById('header-title').textContent = `Welcome, ${App.staff?.name || 'Driver'}`;
+  document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-AU', {
+    weekday:'long', day:'numeric', month:'long'
+  });
+
+  await loadMyRuns();
 }
-async function logout(){await sb.auth.signOut();sessionStorage.clear();window.location.href='login.html';}
+
+async function loadMyRuns() {
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Find runs assigned to this driver today
+  const { data: runs } = await sb.from('runs')
+    .select(`
+      id, date, slot, status, departed_at,
+      vehicles(name, type),
+      run_jobs(stop_order, jobs(id, invoice_number, customer_name, address_raw, suburb_raw, status, type, customer_phone))
+    `)
+    .eq('driver_id', App.staffId)
+    .eq('date', today)
+    .order('slot');
+
+  const el = document.getElementById('content');
+
+  if (!runs || !runs.length) {
+    el.innerHTML = `
+    <div class="empty-card">
+      <div style="font-size:36px;margin-bottom:12px">🚛</div>
+      <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px">No runs assigned today</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.5">Your planner hasn't assigned any runs to you yet.<br>Check back soon or contact the office.</div>
+    </div>`;
+    return;
+  }
+
+  // Also check for QR tokens for each run
+  const runIds = runs.map(r => r.id);
+  const { data: tokens } = await sb.from('run_tokens')
+    .select('run_id, token, expires_at')
+    .in('run_id', runIds)
+    .gt('expires_at', new Date().toISOString());
+
+  const tokenMap = {};
+  (tokens || []).forEach(t => { tokenMap[t.run_id] = t.token; });
+
+  el.innerHTML = runs.map(r => {
+    const stops = (r.run_jobs || []).sort((a,b) => a.stop_order - b.stop_order);
+    const jobs = stops.map(s => s.jobs).filter(Boolean);
+    const delivered = jobs.filter(j => j.status === 'delivered').length;
+    const total = jobs.length;
+    const pct = total ? Math.round(delivered / total * 100) : 0;
+    const token = tokenMap[r.id];
+    const runUrl = token
+      ? `driver-run.html?token=${token}`
+      : null;
+
+    return `
+    <div class="run-card">
+      <div class="run-card-header">
+        <div style="flex:1">
+          <div class="run-card-title">${r.slot} Run — ${r.vehicles?.name || 'Vehicle TBA'}</div>
+          <div class="run-card-sub">
+            ${total} stop${total!==1?'s':''} · ${delivered}/${total} delivered
+            ${r.status==='departed'?' · On road 🚛':''}
+            ${r.status==='complete'?' · Complete ✓':''}
+          </div>
+          <div class="run-progress"><div class="run-progress-fill" style="width:${pct}%"></div></div>
+        </div>
+        ${runUrl ? `<button class="open-run-btn" onclick="window.location.href='${runUrl}'">Open run →</button>` : `<span style="font-size:11px;color:rgba(255,255,255,.6)">No QR yet</span>`}
+      </div>
+      ${jobs.slice(0,5).map(j => {
+        const s = JOB_STATUSES[j.status] || {color:'#a3a4a4',bg:'#f0f4f8',label:j.status};
+        return `
+        <div class="stop-preview">
+          <div class="stop-dot" style="background:${s.color}"></div>
+          <div class="stop-info">
+            <div class="stop-name">${j.customer_name}</div>
+            <div class="stop-addr">${j.address_raw || j.suburb_raw || 'No address'}</div>
+          </div>
+          <span class="status-pill" style="background:${s.bg};color:${s.color}">${s.label}</span>
+          ${j.customer_phone ? `<a href="tel:${j.customer_phone.replace(/\s/g,'')}" style="font-size:18px;text-decoration:none;margin-left:4px">📞</a>` : ''}
+        </div>`;
+      }).join('')}
+      ${jobs.length > 5 ? `<div style="padding:8px 14px;font-size:12px;color:var(--text3);text-align:center">+${jobs.length-5} more stops — open run to see all</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function doSignout() {
+  await signOut();
+}
+
 init();
 </script>
 </body>

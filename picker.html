@@ -2,49 +2,264 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>No.1 Delivery — Picker</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--brand:#00479f;--bg:#f0f4f8;--surface:#fff;--border:#b4cbe1;--text:#1a1a2e;--text2:#565656;--text3:#a3a4a4;--green:#1a7a4a;--green-bg:#e8f5ee;--green-border:#7ec8a0;--radius:10px;--radius-lg:16px;--font:'DM Sans',system-ui,sans-serif;}
-body{background:var(--brand);font-family:var(--font);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-.card{background:var(--surface);border-radius:var(--radius-lg);padding:32px;width:100%;max-width:400px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.icon{font-size:48px;margin-bottom:16px}
-.title{font-size:20px;font-weight:600;color:var(--text);margin-bottom:8px}
-.sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px}
-.name-badge{display:inline-block;padding:8px 20px;background:var(--green-bg);border:0.5px solid var(--green-border);border-radius:20px;font-size:13px;font-weight:600;color:var(--green);margin-bottom:20px}
-.stage-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(0,71,159,.08);color:var(--brand);border:0.5px solid #b4cbe1;margin-bottom:20px}
-.btn{width:100%;padding:12px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
-.btn:hover{background:#003a85}
-.status{padding:10px 14px;background:var(--green-bg);border:0.5px solid var(--green-border);border-radius:var(--radius);font-size:12px;color:var(--green);font-weight:500;margin-bottom:16px}
+:root{
+  --brand:#00479f;--brand-mid:#4b7fb9;--brand-pale:#b4cbe1;--brand-surface:#e5ebef;
+  --bg:#f0f4f8;--surface:#fff;--border:#b4cbe1;--border2:#79a1cb;
+  --text:#1a1a2e;--text2:#565656;--text3:#a3a4a4;
+  --green:#1a7a4a;--green-bg:#e8f5ee;--green-border:#7ec8a0;
+  --amber:#8a5a00;--amber-bg:#fef3dc;--amber-border:#f0b429;
+  --red:#b91c1c;--red-bg:#fef2f2;--red-border:#fca5a5;
+  --teal:#0e7490;--teal-bg:#ecfeff;--teal-border:#67e8f9;
+  --radius:10px;--radius-lg:16px;
+  --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+}
+body{background:var(--bg);font-family:var(--font);font-size:14px;min-height:100vh;padding-bottom:40px}
+.header{background:var(--brand);padding:16px;position:sticky;top:0;z-index:10}
+.header-brand{font-size:11px;color:rgba(255,255,255,.6);font-weight:500;letter-spacing:.3px}
+.header-title{font-size:17px;font-weight:700;color:#fff;margin-top:2px}
+.header-sub{font-size:12px;color:rgba(255,255,255,.7);margin-top:3px;display:flex;align-items:center;justify-content:space-between}
+.signout-btn{background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:500;padding:4px 10px;cursor:pointer;font-family:var(--font)}
+.content{padding:14px}
+.filter-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.filter-tab{padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;border:0.5px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s}
+.filter-tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.pick-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px;transition:border .15s}
+.pick-card:hover{border-color:var(--border2)}
+.pick-card.priority{border-left:3px solid var(--amber-border)}
+.pick-card.recovery{border-left:3px solid var(--red-border)}
+.pick-card.shed{border-left:3px solid var(--teal-border)}
+.pick-card.done{opacity:.6}
+.invoice-num{font-size:12px;font-weight:700;color:var(--brand);font-family:var(--mono);letter-spacing:.3px}
+.item-line{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)}
+.item-line:last-child{border-bottom:none}
+.item-check{width:20px;height:20px;border-radius:4px;border:2px solid var(--border2);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.item-check.checked{background:var(--green);border-color:var(--green)}
+.action-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:var(--radius);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;border:0.5px solid;transition:all .15s}
+.btn-primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn-primary:hover{background:#003a85}
+.btn-ghost{background:transparent;color:var(--text2);border-color:var(--border)}
+.btn-ghost:hover{border-color:var(--brand);color:var(--brand)}
+.status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.spinner{display:inline-block;width:24px;height:24px;border:3px solid rgba(0,71,159,.15);border-top-color:var(--brand);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{display:flex;align-items:center;justify-content:center;padding:48px;gap:12px;color:var(--text2);font-size:13px}
+.progress-bar{height:6px;background:var(--brand-surface);border-radius:20px;margin-bottom:16px;overflow:hidden}
+.progress-fill{height:100%;background:var(--brand);border-radius:20px;transition:width .4s}
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="icon">📦</div>
-  <div class="title">Picker / Loader View</div>
-  <div class="status">✓ Login successful — routing working correctly</div>
-  <div class="name-badge" id="name-badge">Loading...</div>
-  <div class="sub">This will become your picking list — all jobs to pick and load for today's runs. Coming in Stage 3.</div>
-  <div class="stage-badge">Stage 3 — Jobs</div>
-  <button class="btn" onclick="logout()">Sign out</button>
+
+<div class="header">
+  <div class="header-brand">NO.1 DELIVERY · PRESTONS</div>
+  <div class="header-title" id="header-title">Picking List</div>
+  <div class="header-sub">
+    <span id="header-date"></span>
+    <button class="signout-btn" onclick="doSignout()">Sign out</button>
+  </div>
 </div>
+
+<div class="content">
+  <div id="progress-wrap" style="display:none">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px">
+      <span>Picking progress</span>
+      <span id="progress-label">0 of 0 picked</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="filter-tabs">
+    <button class="filter-tab active" onclick="setFilter('unpicked',this)">To pick</button>
+    <button class="filter-tab" onclick="setFilter('picked',this)">Picked</button>
+    <button class="filter-tab" onclick="setFilter('all',this)">All</button>
+  </div>
+
+  <div id="pick-list">
+    <div class="loading"><div class="spinner"></div> Loading picking list...</div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
 <script>
-const SUPABASE_URL='https://mnhwcuawsdxeyzqkjdwq.supabase.co';
-const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1uaHdjdWF3c2R4ZXl6cWtqZHdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwMjM1ODksImV4cCI6MjA5NTU5OTU4OX0.ALToJk7zpFYRLZPwoAN7d8EHsU6AE0wNKfNxVCoS_tk';
-const {createClient}=supabase;
-const sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-async function init(){
-  const name=sessionStorage.getItem('staff_name');
-  const role=sessionStorage.getItem('staff_role');
-  const pin=sessionStorage.getItem('pin_auth');
-  const {data:{session}}=await sb.auth.getSession();
-  if(!session&&!pin){window.location.href='login.html';return;}
-  document.getElementById('name-badge').textContent='👋 '+( name||'Staff member')+' — logged in';
+let allJobs = [];
+let currentFilter = 'unpicked';
+
+const JOB_STATUSES = {
+  unpicked:{label:'Unpicked',color:'#a3a4a4',bg:'#f0f4f8'},
+  picked:{label:'Picked',color:'#8a5a00',bg:'#fef3dc'},
+  loaded:{label:'Loaded',color:'#0e7490',bg:'#ecfeff'},
+  departed:{label:'Departed',color:'#5b21b6',bg:'#f5f3ff'},
+  arrived:{label:'Arrived',color:'#00479f',bg:'#e5ebef'},
+  delivered:{label:'Delivered',color:'#1a7a4a',bg:'#e8f5ee'},
+};
+
+async function init() {
+  const ok = await initApp(['picker','planner','branch_manager','super_admin']);
+  if (!ok) return;
+
+  document.getElementById('header-title').textContent = `Hi ${App.staff?.name || 'there'} — Picking List`;
+  document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-AU', {
+    weekday:'long', day:'numeric', month:'long'
+  });
+
+  await loadJobs();
 }
-async function logout(){await sb.auth.signOut();sessionStorage.clear();window.location.href='login.html';}
+
+async function loadJobs() {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data } = await sb.from('jobs')
+    .select('*, job_items(*)')
+    .eq('delivery_date', today)
+    .in('status', ['unpicked','picked','loaded'])
+    .order('type').order('run_slot');
+
+  allJobs = data || [];
+  renderProgress();
+  renderList();
+}
+
+function renderProgress() {
+  const total  = allJobs.length;
+  const picked = allJobs.filter(j => j.status === 'picked' || j.status === 'loaded').length;
+  const pct    = total ? Math.round(picked / total * 100) : 0;
+  document.getElementById('progress-wrap').style.display = total ? 'block' : 'none';
+  document.getElementById('progress-label').textContent = `${picked} of ${total} picked`;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+function renderList() {
+  const el = document.getElementById('pick-list');
+  let jobs = [...allJobs];
+  if (currentFilter === 'unpicked') jobs = jobs.filter(j => j.status === 'unpicked');
+  if (currentFilter === 'picked')   jobs = jobs.filter(j => j.status === 'picked' || j.status === 'loaded');
+
+  if (!jobs.length) {
+    el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text3)">
+      <div style="font-size:32px;margin-bottom:10px">${currentFilter==='unpicked'?'✓':'📦'}</div>
+      <div style="font-size:14px;font-weight:500;color:var(--text2)">${currentFilter==='unpicked'?'All jobs picked for today':'No picked jobs yet'}</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = jobs.map(j => {
+    const items = j.job_items || [];
+    const isDone = j.status === 'picked' || j.status === 'loaded';
+    const s = JOB_STATUSES[j.status] || {label:j.status,color:'#a3a4a4',bg:'#f0f4f8'};
+    return `
+    <div class="pick-card ${j.type} ${isDone?'done':''}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+        <div>
+          <div class="invoice-num">${j.invoice_number}</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:2px">${j.customer_name}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:1px">${j.suburb_raw||''}${j.run_slot&&j.run_slot!=='unassigned'?' · '+j.run_slot+' run':''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="status-pill" style="background:${s.bg};color:${s.color}">${s.label}</span>
+          ${j.type!=='standard'?`<span style="font-size:10px;font-weight:700;color:${j.type==='priority'?'var(--amber)':j.type==='recovery'?'var(--red)':'var(--teal)'}">${j.type==='priority'?'⚡ Priority':j.type==='recovery'?'🔴 Recovery':'🏠 Shed'}</span>`:''}
+          ${j.max_item_length_mm>6000?'<span style="font-size:10px;font-weight:700;color:var(--red)">9m truck</span>':''}
+        </div>
+      </div>
+
+      <div style="background:var(--bg);border-radius:var(--radius);padding:8px 12px;margin-bottom:8px">
+        <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:6px">ITEMS TO PICK</div>
+        ${items.map((item,i) => `
+        <div class="item-line">
+          <div class="item-check ${isDone?'checked':''}" onclick="toggleItem(this)" id="item-${j.id}-${i}">
+            ${isDone?'<span style="color:#fff;font-size:12px">✓</span>':''}
+          </div>
+          <div style="flex:1">
+            <span style="font-family:var(--mono);font-weight:700;color:var(--brand)">${item.quantity} × ${fmtLen(item.length_mm)}</span>
+            <span style="color:var(--text2);margin-left:6px">${item.product_name}</span>
+          </div>
+        </div>`).join('')}
+      </div>
+
+      ${j.notes?`<div style="font-size:11px;color:var(--text3);font-style:italic;margin-bottom:8px">📝 ${j.notes}</div>`:''}
+      ${j.po_number?`<div style="font-size:11px;font-weight:600;color:var(--teal);margin-bottom:8px">📦 Collect PO: ${j.po_number} from ${j.supplier_name||'supplier'}</div>`:''}
+
+      ${!isDone ? `
+      <div class="action-row">
+        <button class="btn btn-primary" onclick="markPicked('${j.id}')">✓ Mark picked</button>
+      </div>` : `
+      <div class="action-row">
+        ${j.status==='picked'?`<button class="btn btn-primary" onclick="markLoaded('${j.id}')">📦 Mark loaded</button>`:''}
+        <span style="font-size:12px;color:var(--green);font-weight:600;display:flex;align-items:center;gap:4px">✓ ${j.status==='loaded'?'Loaded':'Picked'}${j.picked_by?' by '+j.picked_by:''}</span>
+      </div>`}
+    </div>`;
+  }).join('');
+}
+
+function toggleItem(el) {
+  const isChecked = el.classList.contains('checked');
+  el.classList.toggle('checked', !isChecked);
+  el.innerHTML = !isChecked ? '<span style="color:#fff;font-size:12px">✓</span>' : '';
+}
+
+async function markPicked(jobId) {
+  const { error } = await sb.from('jobs').update({
+    status: 'picked',
+    picked_by: App.staffId,
+  }).eq('id', jobId);
+  if (error) { showToast('Could not update: ' + error.message, 'error'); return; }
+  await sb.from('job_log').insert({
+    job_id: jobId,
+    action: 'Picked',
+    performed_by: App.staffId,
+    performed_by_name: App.staff?.name,
+  });
+  showToast('Marked as picked ✓');
+  await loadJobs();
+}
+
+async function markLoaded(jobId) {
+  const { error } = await sb.from('jobs').update({
+    status: 'loaded',
+    loaded_by: App.staffId,
+  }).eq('id', jobId);
+  if (error) { showToast('Could not update: ' + error.message, 'error'); return; }
+  await sb.from('job_log').insert({
+    job_id: jobId,
+    action: 'Loaded onto vehicle',
+    performed_by: App.staffId,
+    performed_by_name: App.staff?.name,
+  });
+  showToast('Marked as loaded ✓');
+  await loadJobs();
+}
+
+function fmtLen(mm) {
+  if (!mm && mm !== 0) return '—';
+  return (mm / 1000).toFixed(3).replace(/\.?0+$/, '') + 'm';
+}
+
+function showToast(msg, type = 'success') {
+  const existing = document.getElementById('app-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'app-toast';
+  toast.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;background:${type==='success'?'#1a7a4a':'#b91c1c'};color:#fff;font-family:var(--font)`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+async function doSignout() {
+  await signOut();
+}
+
 init();
 </script>
 </body>
