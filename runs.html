@@ -726,18 +726,17 @@ async function showRunQR(runId) {
       <div style="font-size:13px;font-weight:600;color:var(--text)">${run.slot} Run — ${run.vehicles?.name || 'TBA'}</div>
       <div style="font-size:11px;color:var(--text2)">Driver: ${run.driver?.name || 'TBA'} · ${jobs.length} stops · ${fmtDate(run.date)}</div>
     </div>
-    <canvas id="run-qr-canvas" style="display:block;margin:0 auto 12px"></canvas>
+    <div id="run-qr-canvas" style="display:flex;justify-content:center;margin:0 auto 12px"></div>
     <div style="font-size:10px;color:var(--text3);word-break:break-all;margin-bottom:8px">${url}</div>
     <div style="font-size:11px;color:var(--green);font-weight:500">✓ No login required · Expires in 48 hours</div>`;
 
   document.getElementById('modal-qr').style.display = 'flex';
 
   setTimeout(() => {
-    const canvas = document.getElementById('run-qr-canvas');
-    if (canvas && typeof QRCode !== 'undefined') {
-      canvas.width = 200;
-      canvas.height = 200;
-      new QRCode(canvas, {
+    const el = document.getElementById('run-qr-canvas');
+    if (el && typeof QRCode !== 'undefined') {
+      el.innerHTML = '';
+      new QRCode(el, {
         text: url,
         width: 200,
         height: 200,
@@ -747,6 +746,7 @@ async function showRunQR(runId) {
     }
   }, 200);
 }
+
 // ---- PRINT SINGLE RUN ----
 function printRun(runId) {
   // Hide all other runs, print, restore

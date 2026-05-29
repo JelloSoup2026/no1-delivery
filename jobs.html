@@ -692,7 +692,7 @@ async function openLabelModal(jobId) {
           <div class="qr-label-customer">${j.customer_name}</div>
           ${j.customer_phone ? `<div style="font-size:11px;color:#565656">📞 ${j.customer_phone}</div>` : ''}
         </div>
-        <canvas id="qr-canvas" style="width:72px;height:72px"></canvas>
+        <div id="qr-canvas" style="display:flex;justify-content:center;margin:0 auto 8px"></div>
       </div>
       <div class="qr-label-address">${j.address_raw || ''}${j.suburb_raw ? ', ' + j.suburb_raw : ''}${j.postcode ? ' ' + j.postcode : ''}</div>
       <div class="qr-label-items">${items.map(i => `${i.quantity} × ${fmtLen(i.length_mm)} ${i.product_name}`).join('<br>')}</div>
@@ -705,10 +705,10 @@ async function openLabelModal(jobId) {
   // Generate QR code
   setTimeout(() => {
     const canvas = document.getElementById('qr-canvas');
-    if (canvas && typeof QRCode !== 'undefined') {
-      canvas.width = 72;
-      canvas.height = 72;
-      new QRCode(canvas, {
+    const el = document.getElementById('qr-canvas');
+    if (el && typeof QRCode !== 'undefined') {
+      el.innerHTML = '';
+      new QRCode(el, {
         text: qrData,
         width: 72,
         height: 72,
