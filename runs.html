@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>No.1 Delivery — Run Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* RUN LANES */
+.run-lane{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px}
+.run-lane-header{background:var(--brand);padding:14px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.run-lane-title{font-size:14px;font-weight:700;color:#fff}
+.run-lane-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:3px;line-height:1.5}
+.run-lane-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.run-btn{background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;padding:5px 10px;cursor:pointer;font-family:var(--font);transition:background .15s;white-space:nowrap}
+.run-btn:hover{background:rgba(255,255,255,.28)}
+.run-btn.danger{background:rgba(239,68,68,.25)}.run-btn.danger:hover{background:rgba(239,68,68,.4)}
+.run-btn.green{background:rgba(26,122,74,.3)}.run-btn.green:hover{background:rgba(26,122,74,.5)}
+
+/* STOPS */
+.stop-list{padding:10px}
+.stop-card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;cursor:grab;transition:all .15s;position:relative}
+.stop-card:hover{border-color:var(--border2)}
+.stop-card.dragging{opacity:.4;cursor:grabbing}
+.stop-card.drag-over{border:2px dashed var(--brand);background:rgba(0,71,159,.03)}
+.stop-num{width:28px;height:28px;border-radius:50%;background:var(--brand);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.stop-num.priority-stop{background:var(--amber-border)}
+.stop-num.recovery-stop{background:var(--red)}
+.stop-num.shed-stop{background:var(--teal)}
+.stop-num.delivered-stop{background:var(--green)}
+.stop-body{flex:1;min-width:0}
+.stop-invoice{font-size:11px;font-weight:700;color:var(--brand);font-family:var(--mono);letter-spacing:.3px}
+.stop-customer{font-size:14px;font-weight:600;color:var(--text);margin-top:1px}
+.stop-address{font-size:11px;color:var(--text2);margin-top:2px}
+.stop-items{font-size:11px;color:var(--text2);margin-top:4px;line-height:1.6}
+.stop-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.stop-actions{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.drag-handle{color:var(--text3);font-size:16px;cursor:grab;padding:2px 4px;flex-shrink:0;align-self:center}
+
+/* DATE NAV */
+.date-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.date-nav-btn{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);color:var(--text2);font-size:13px;font-weight:500;padding:7px 12px;cursor:pointer;font-family:var(--font);transition:all .15s}
+.date-nav-btn:hover{border-color:var(--brand);color:var(--brand)}
+.date-display{font-size:14px;font-weight:600;color:var(--text);padding:7px 16px;background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);min-width:220px;text-align:center}
+
+/* UNASSIGNED PANEL */
+.unassigned-panel{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px}
+.unassigned-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.job-checkbox-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer;transition:border .15s}
+.job-checkbox-row:hover{border-color:var(--border2)}
+.job-checkbox-row.selected{border-color:var(--brand);background:rgba(0,71,159,.03)}
+.job-checkbox-row.priority{border-left:2px solid var(--amber-border)}
+.job-checkbox-row.recovery{border-left:2px solid var(--red)}
+.job-checkbox-row.shed{border-left:2px solid var(--teal)}
+
+/* MODAL SPECIFICS */
+.vehicle-option{display:flex;align-items:center;gap:10px;padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s;margin-bottom:8px}
+.vehicle-option:hover{border-color:var(--brand)}
+.vehicle-option.selected{border-color:var(--brand);background:rgba(0,71,159,.04)}
+.vehicle-icon{width:36px;height:36px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+
+/* PRINT STYLES */
+@media print{
+  #topbar,.date-nav,.unassigned-panel,.run-lane-actions,
+  .stop-actions,.drag-handle,.no-print,
+  button{display:none!important}
+  body{background:#fff;font-size:12px}
+  .run-lane{border:1px solid #ccc;break-inside:avoid;margin-bottom:24px;page-break-inside:avoid}
+  .run-lane-header{background:#00479f!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .stop-card{border:1px solid #ddd;break-inside:avoid}
+  .page-wrap{padding:0}
+  .stop-num{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div id="topbar"></div>
+<div class="page-wrap">
+
+  <!-- HEADER -->
+  <div class="section-header" style="margin-bottom:16px">
+    <div>
+      <div class="section-title">Run Planner</div>
+      <div class="section-sub" id="runs-sub">Loading...</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" class="no-print">
+      <button class="btn btn-ghost" onclick="window.print()">🖨 Print all runs</button>
+      <button class="btn btn-amber" onclick="autoBuilRuns()">⚡ Auto-build runs</button>
+      <button class="btn btn-primary" onclick="openNewRunModal()">+ New Run</button>
+    </div>
+  </div>
+
+  <!-- DATE NAV -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px" class="no-print">
+    <div class="date-nav">
+      <button class="date-nav-btn" onclick="changeDate(-1)">&#8249; Prev</button>
+      <div class="date-display" id="date-display"></div>
+      <button class="date-nav-btn" onclick="changeDate(1)">Next &#8250;</button>
+      <button class="date-nav-btn" onclick="goToday()">Today</button>
+      <input type="date" id="date-picker" class="date-nav-btn" onchange="setDate(this.value)" style="cursor:pointer">
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <div style="width:10px;height:10px;border-radius:50%;background:var(--brand)"></div>
+      <span style="font-size:11px;color:var(--text3)">Run</span>
+      <div style="width:10px;height:10px;border-radius:50%;background:var(--amber-border);margin-left:6px"></div>
+      <span style="font-size:11px;color:var(--text3)">Priority</span>
+      <div style="width:10px;height:10px;border-radius:50%;background:var(--teal);margin-left:6px"></div>
+      <span style="font-size:11px;color:var(--text3)">Shed</span>
+    </div>
+  </div>
+
+  <!-- UNASSIGNED JOBS -->
+  <div class="unassigned-panel no-print" id="unassigned-panel">
+    <div class="unassigned-header">
+      <div>
+        <div style="font-size:14px;font-weight:600;color:var(--text)">Unassigned jobs</div>
+        <div style="font-size:12px;color:var(--text3)" id="unassigned-sub">Loading...</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="toggleUnassigned()">Hide ▲</button>
+      </div>
+    </div>
+    <div id="unassigned-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- RUNS FOR THE DAY -->
+  <div id="runs-list">
+    <div class="loading-wrap"><div class="spinner spinner-lg"></div></div>
+  </div>
+
+</div>
+
+<!-- NEW / EDIT RUN MODAL -->
+<div id="modal-run" class="modal-overlay" style="display:none" onclick="closeModal('modal-run',event)">
+<div class="modal" onclick="event.stopPropagation()">
+  <div class="modal-header">
+    <div class="modal-title" id="modal-run-title">New Run</div>
+    <button class="modal-close" onclick="closeModal('modal-run')">&times;</button>
+  </div>
+  <input type="hidden" id="run-id">
+  <div style="display:flex;flex-direction:column;gap:14px">
+
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Run date</div>
+        <input class="form-input" type="date" id="run-date">
+      </div>
+      <div class="form-group">
+        <div class="form-label">Run slot</div>
+        <select class="form-select" id="run-slot">
+          <option value="1st">1st Run</option>
+          <option value="2nd">2nd Run</option>
+          <option value="3rd">3rd Run</option>
+          <option value="4th">4th Run</option>
+          <option value="5th">5th Run</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Vehicle</div>
+      <div id="vehicle-selector"></div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <div class="form-label">Driver</div>
+        <select class="form-select" id="run-driver">
+          <option value="">Select driver...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Offsider (optional)</div>
+        <select class="form-select" id="run-offsider">
+          <option value="">None</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Assign jobs to this run</div>
+      <div id="run-job-selector" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px 0"></div>
+      <div id="run-length-warn" style="margin-top:8px"></div>
+    </div>
+
+    <div class="form-group">
+      <div class="form-label">Run notes</div>
+      <input class="form-input" id="run-notes" placeholder="Any notes for this run...">
+    </div>
+
+    <div class="divider"></div>
+    <div style="display:flex;gap:8px;justify-content:space-between">
+      <button class="btn btn-danger btn-sm" id="delete-run-btn" style="display:none" onclick="deleteRun()">Delete run</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-ghost" onclick="closeModal('modal-run')">Cancel</button>
+        <button class="btn btn-primary" id="save-run-btn" onclick="saveRun()">Save Run</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- QR MODAL -->
+<div id="modal-qr" class="modal-overlay" style="display:none" onclick="closeModal('modal-qr',event)">
+<div class="modal" style="max-width:360px;text-align:center" onclick="event.stopPropagation()">
+  <div class="modal-header">
+    <div class="modal-title">Run sheet QR code</div>
+    <button class="modal-close" onclick="closeModal('modal-qr')">&times;</button>
+  </div>
+  <div id="qr-body"></div>
+  <div class="divider"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end" class="no-print">
+    <button class="btn btn-ghost" onclick="closeModal('modal-qr')">Close</button>
+    <button class="btn btn-primary" onclick="window.print()">🖨 Print</button>
+  </div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="app.js"></script>
+<script>
+let viewDate    = todayStr();
+let allRuns     = [];
+let allJobs     = [];
+let allVehicles = [];
+let allStaff    = [];
+let dragStopId  = null;
+let dragRunId   = null;
+let unassignedVisible = true;
+
+async function init() {
+  const ok = await initApp(['super_admin','branch_manager','planner']);
+  if (!ok) return;
+  renderTopbar('runs');
+  document.getElementById('date-picker').value = viewDate;
+  updateDateDisplay();
+  await Promise.all([loadVehicles(), loadStaff()]);
+  await loadPage();
+}
+
+function updateDateDisplay() {
+  const d = new Date(viewDate + 'T00:00:00');
+  document.getElementById('date-display').textContent = d.toLocaleDateString('en-AU', {
+    weekday:'long', day:'numeric', month:'long', year:'numeric'
+  });
+  document.getElementById('date-picker').value = viewDate;
+}
+
+function changeDate(dir) {
+  const d = new Date(viewDate + 'T00:00:00');
+  d.setDate(d.getDate() + dir);
+  viewDate = d.toISOString().slice(0, 10);
+  updateDateDisplay();
+  loadPage();
+}
+
+function goToday() {
+  viewDate = todayStr();
+  updateDateDisplay();
+  loadPage();
+}
+
+function setDate(val) {
+  viewDate = val;
+  updateDateDisplay();
+  loadPage();
+}
+
+async function loadVehicles() {
+  const { data } = await sb.from('vehicles').select('*').eq('active', true).order('name');
+  allVehicles = data || [];
+}
+
+async function loadStaff() {
+  const { data } = await sb.from('staff')
+    .select('id,name,role,phone')
+    .eq('active', true)
+    .in('role', ['driver','planner','picker','branch_manager','super_admin'])
+    .order('name');
+  allStaff = data || [];
+}
+
+async function loadPage() {
+  await Promise.all([loadRuns(), loadUnassigned()]);
+}
+
+async function loadRuns() {
+  const el = document.getElementById('runs-list');
+  el.innerHTML = '<div class="loading-wrap"><div class="spinner spinner-lg"></div></div>';
+
+  const { data: runs } = await sb.from('runs')
+    .select(`
+      *,
+      vehicles(id,name,type,max_length_mm),
+      driver:staff!runs_driver_id_fkey(id,name,phone),
+      offsider:staff!runs_offsider_id_fkey(id,name),
+      planner:staff!runs_planned_by_fkey(id,name),
+      run_jobs(id,stop_order,original_order,job_id,jobs(id,invoice_number,customer_name,customer_phone,address_raw,suburb_raw,postcode,status,type,run_slot,max_item_length_mm,po_number,supplier_name,notes,job_items(*)))
+    `)
+    .eq('date', viewDate)
+    .order('slot');
+
+  allRuns = runs || [];
+
+  const isSat = new Date(viewDate + 'T00:00:00').getDay() === 6;
+  const isSun = new Date(viewDate + 'T00:00:00').getDay() === 0;
+
+  document.getElementById('runs-sub').textContent =
+    `${allRuns.length} run${allRuns.length !== 1 ? 's' : ''} · ${viewDate}${isSat ? ' — Saturday' : ''}${isSun ? ' — Sunday' : ''}`;
+
+  if (!allRuns.length) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">🚛</div>
+      <div class="empty-state-title">No runs for this date</div>
+      <div class="empty-state-desc">Click "+ New Run" to create one, or use "⚡ Auto-build runs" to generate them automatically.</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = allRuns.map(r => renderRunLane(r)).join('');
+}
+
+function renderRunLane(r) {
+  const stops = (r.run_jobs || [])
+    .sort((a, b) => a.stop_order - b.stop_order);
+  const jobs = stops.map(s => s.jobs).filter(Boolean);
+  const delivered = jobs.filter(j => j.status === 'delivered').length;
+  const hasPriority = jobs.some(j => j.type === 'priority');
+  const hasRecovery = jobs.some(j => j.type === 'recovery');
+  const hasShed = jobs.some(j => j.type === 'shed');
+  const maxLen = jobs.reduce((m, j) => Math.max(m, j.max_item_length_mm || 0), 0);
+  const vWarn = r.vehicles && maxLen > r.vehicles.max_length_mm;
+  const poJobs = jobs.filter(j => j.po_number);
+
+  return `
+  <div class="run-lane" id="run-${r.id}">
+    <div class="run-lane-header">
+      <div>
+        <div class="run-lane-title">
+          ${r.slot} Run — ${r.vehicles?.name || 'No vehicle'}
+          ${r.vehicles ? `<span style="font-size:11px;font-weight:400;opacity:.8"> (max ${fmtLen(r.vehicles.max_length_mm)})</span>` : ''}
+        </div>
+        <div class="run-lane-sub">
+          Driver: <strong style="color:#fff">${r.driver?.name || 'TBA'}</strong>
+          ${r.driver?.phone ? ` · 📞 ${r.driver.phone}` : ''}
+          ${r.offsider ? ` · Offsider: ${r.offsider.name}` : ''}
+          &nbsp;·&nbsp; ${jobs.length} stop${jobs.length !== 1 ? 's' : ''}
+          &nbsp;·&nbsp; ${delivered}/${jobs.length} delivered
+          ${hasPriority ? ' &nbsp;·&nbsp; <span style="color:#f0b429;font-weight:700">⚡ Priority</span>' : ''}
+          ${hasRecovery ? ' &nbsp;·&nbsp; <span style="color:#fca5a5;font-weight:700">🔴 Recovery</span>' : ''}
+          ${hasShed ? ' &nbsp;·&nbsp; <span style="color:#67e8f9;font-weight:700">🏠 Shed</span>' : ''}
+        </div>
+        ${r.departed_at ? `<div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:3px">Left yard: ${fmtDateTime(r.departed_at)}</div>` : ''}
+        ${r.status === 'complete' ? `<div style="font-size:11px;color:#4ade80;font-weight:600;margin-top:3px">✓ Run complete — ${fmtDateTime(r.completed_at)}</div>` : ''}
+        ${r.notes ? `<div style="font-size:11px;color:rgba(255,255,255,.65);margin-top:3px">📝 ${r.notes}</div>` : ''}
+      </div>
+      <div class="run-lane-actions no-print">
+        ${r.status === 'planned' ? `<button class="run-btn green" onclick="departRun('${r.id}')">🚛 Depart</button>` : ''}
+        ${r.status === 'departed' ? `<span style="font-size:11px;color:rgba(255,255,255,.8)">▶ On road</span>` : ''}
+        <button class="run-btn" onclick="showRunQR('${r.id}')">📱 QR</button>
+        <button class="run-btn" onclick="printRun('${r.id}')">🖨 Print</button>
+        <button class="run-btn" onclick="resetStopOrder('${r.id}')">↺ Reset order</button>
+        <button class="run-btn" onclick="openEditRun('${r.id}')">Edit</button>
+        <button class="run-btn danger" onclick="confirmDeleteRun('${r.id}')">Delete</button>
+      </div>
+    </div>
+
+    ${vWarn ? `<div class="alert alert-warn" style="margin:10px 10px 0;font-size:12px">⚠ Item length (${fmtLen(maxLen)}) exceeds vehicle capacity (${fmtLen(r.vehicles.max_length_mm)})</div>` : ''}
+
+    ${poJobs.length ? `
+    <div style="padding:10px 14px;border-bottom:0.5px solid var(--border);background:rgba(14,116,144,.04)">
+      <div style="font-size:10px;font-weight:700;color:var(--teal);letter-spacing:.4px;margin-bottom:6px">SUPPLIER COLLECTIONS</div>
+      ${poJobs.map(j => `<div style="font-size:12px;color:var(--text2);margin-bottom:3px">
+        📦 <strong>PO: ${j.po_number}</strong> — ${j.supplier_name || '?'} <span style="color:var(--text3)">(for ${j.customer_name} / ${j.invoice_number})</span>
+      </div>`).join('')}
+    </div>` : ''}
+
+    <div class="stop-list" id="stops-${r.id}">
+      ${stops.map((s, i) => renderStopCard(s.jobs, i + 1, r.id, s.id)).join('')}
+    </div>
+  </div>`;
+}
+
+function renderStopCard(j, num, runId, runJobId) {
+  if (!j) return '';
+  const numCls = j.type === 'priority' ? 'priority-stop'
+    : j.type === 'recovery' ? 'recovery-stop'
+    : j.type === 'shed' ? 'shed-stop'
+    : j.status === 'delivered' ? 'delivered-stop' : '';
+
+  const items = j.job_items || [];
+  return `
+  <div class="stop-card" id="stop-${runJobId}"
+    draggable="true"
+    ondragstart="dragStart(event,'${runJobId}','${runId}')"
+    ondragover="allowDrop(event)"
+    ondrop="dropStop(event,'${runJobId}','${runId}')"
+    ondragend="dragEnd(event)">
+    <div class="drag-handle no-print">⠿</div>
+    <div class="stop-num ${numCls}">${j.status === 'delivered' ? '✓' : num}</div>
+    <div class="stop-body">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div>
+          <span class="stop-invoice">${j.invoice_number}</span>
+          ${typeTag(j.type)}
+          <div class="stop-customer">${j.customer_name}</div>
+          ${j.customer_phone ? `<div style="margin-top:3px">${phoneLink(j.customer_phone)}</div>` : ''}
+          <div class="stop-address">${j.address_raw || j.suburb_raw || 'No address'}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          ${statusPill(j.status)}
+          ${mapsLink(j.address_raw)}
+        </div>
+      </div>
+      ${items.length ? `<div class="stop-items">${items.map(i => `<strong style="color:var(--text);font-family:var(--mono)">${i.quantity}×${fmtLen(i.length_mm)}</strong> ${i.product_name}`).join(' &nbsp;·&nbsp; ')}</div>` : ''}
+      ${j.max_item_length_mm > 6000 ? `<div style="margin-top:4px"><span class="tag tag-warn" style="font-size:10px">9m truck required</span></div>` : ''}
+      ${j.po_number ? `<div style="margin-top:4px"><span class="tag tag-po" style="font-size:10px">PO: ${j.po_number}</span></div>` : ''}
+      ${j.notes ? `<div style="font-size:11px;color:var(--text3);margin-top:4px;font-style:italic">📝 ${j.notes}</div>` : ''}
+      <div class="stop-actions no-print">
+        ${j.status !== 'delivered' ? `<button class="btn btn-primary btn-sm" onclick="advanceStop('${j.id}','${runId}')">→ ${JOB_STATUSES[STATUS_NEXT[j.status]]?.label || ''}</button>` : `<span style="color:var(--green);font-size:12px;font-weight:600">✓ Delivered</span>`}
+        <button class="btn btn-danger btn-sm" onclick="removeStopFromRun('${runId}','${j.id}')">Remove</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ---- UNASSIGNED JOBS ----
+async function loadUnassigned() {
+  const { data: jobs } = await sb.from('jobs')
+    .select('id,invoice_number,customer_name,type,status,delivery_date,run_slot,suburb_raw,postcode,max_item_length_mm')
+    .in('status', ['unpicked','picked','loaded'])
+    .neq('type', 'delivered')
+    .order('type').order('delivery_date');
+
+  allJobs = jobs || [];
+  renderUnassigned();
+}
+
+function renderUnassigned() {
+  const el = document.getElementById('unassigned-list');
+  // Jobs not already in a run today
+  const assignedIds = allRuns.flatMap(r => (r.run_jobs || []).map(rj => rj.job_id));
+  const unassigned = allJobs.filter(j => !assignedIds.includes(j.id));
+
+  document.getElementById('unassigned-sub').textContent =
+    `${unassigned.length} job${unassigned.length !== 1 ? 's' : ''} not yet on a run`;
+
+  if (!unassigned.length) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--text3);padding:8px 0">All jobs are assigned to runs ✓</div>`;
+    return;
+  }
+
+  // Sort: priority first, then by date
+  unassigned.sort((a, b) => {
+    const ord = { priority:0, recovery:1, shed:2, standard:3 };
+    return (ord[a.type]||3) - (ord[b.type]||3) || (a.delivery_date||'') < (b.delivery_date||'') ? -1 : 1;
+  });
+
+  el.innerHTML = unassigned.map(j => `
+  <div class="job-checkbox-row ${j.type}" onclick="toggleJobSelect(this,'${j.id}')">
+    <input type="checkbox" value="${j.id}" onclick="event.stopPropagation()" onchange="toggleJobSelect(this.closest('.job-checkbox-row'),'${j.id}')">
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span class="invoice-num" style="font-size:11px">${j.invoice_number}</span>
+        ${typeTag(j.type)}
+        ${j.max_item_length_mm > 6000 ? '<span class="tag tag-warn" style="font-size:9px">9m</span>' : ''}
+      </div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-top:2px">${j.customer_name}</div>
+      <div style="font-size:11px;color:var(--text2)">${j.suburb_raw||''}${j.postcode?' ('+j.postcode+')':''}${j.delivery_date?' · '+fmtDate(j.delivery_date):''}${j.run_slot&&j.run_slot!=='unassigned'?' · '+j.run_slot+' run':''}</div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);text-align:right;flex-shrink:0">
+      max<br><strong style="color:${j.max_item_length_mm>6000?'var(--amber)':'var(--text)'}">${fmtLen(j.max_item_length_mm)}</strong>
+    </div>
+  </div>`).join('');
+}
+
+function toggleJobSelect(row, jobId) {
+  const cb = row.querySelector('input[type=checkbox]');
+  if (cb) cb.checked = !cb.checked;
+  row.classList.toggle('selected', cb?.checked);
+}
+
+function getSelectedJobIds() {
+  return [...document.querySelectorAll('#unassigned-list input[type=checkbox]:checked')].map(cb => cb.value);
+}
+
+function toggleUnassigned() {
+  unassignedVisible = !unassignedVisible;
+  document.getElementById('unassigned-list').style.display = unassignedVisible ? 'block' : 'none';
+  document.querySelector('.unassigned-panel button').textContent = unassignedVisible ? 'Hide ▲' : 'Show ▼';
+}
+
+// ---- AUTO-BUILD RUNS ----
+async function autoBuilRuns() {
+  const assignedIds = allRuns.flatMap(r => (r.run_jobs || []).map(rj => rj.job_id));
+  const unassigned = allJobs.filter(j => !assignedIds.includes(j.id) && j.delivery_date === viewDate);
+
+  if (!unassigned.length) {
+    showToast('No unassigned jobs for this date', 'warn');
+    return;
+  }
+
+  if (!allVehicles.length) {
+    showToast('No vehicles configured. Add vehicles in Fleet first.', 'error');
+    return;
+  }
+
+  if (!confirm(`Auto-build runs for ${viewDate}? This will assign ${unassigned.length} jobs to available vehicles.`)) return;
+
+  // Sort jobs: priority first, then by postcode (clustering)
+  const sorted = [...unassigned].sort((a, b) => {
+    const ord = { priority:0, recovery:1, shed:2, standard:3 };
+    const typeDiff = (ord[a.type]||3) - (ord[b.type]||3);
+    if (typeDiff !== 0) return typeDiff;
+    return (a.postcode||'').localeCompare(b.postcode||'');
+  });
+
+  // Available vehicles: trucks first for long items
+  const trucks = allVehicles.filter(v => v.type === 'truck_9m');
+  const utes   = allVehicles.filter(v => v.type === 'ute');
+  const vehicleQueue = [...trucks, ...utes];
+
+  if (!vehicleQueue.length) {
+    showToast('No vehicles available', 'error');
+    return;
+  }
+
+  // Check existing slots used today
+  const usedSlots = allRuns.map(r => r.slot);
+  const availableSlots = ['1st','2nd','3rd','4th','5th'].filter(s => !usedSlots.includes(s));
+
+  if (!availableSlots.length) {
+    showToast('All run slots are already used for this date', 'warn');
+    return;
+  }
+
+  // Assign jobs to vehicles
+  // Jobs over 6m MUST go on a 9m truck
+  const longJobs   = sorted.filter(j => j.max_item_length_mm > 6000);
+  const normalJobs = sorted.filter(j => j.max_item_length_mm <= 6000);
+
+  const runs = [];
+  let slotIdx = 0;
+
+  // Long jobs → truck
+  if (longJobs.length && trucks.length) {
+    runs.push({ vehicle: trucks[0], jobs: longJobs, slot: availableSlots[slotIdx++] });
+  } else if (longJobs.length) {
+    showToast('Warning: Long items need a 9m truck but none available', 'warn');
+  }
+
+  // Normal jobs → remaining vehicles
+  const remainingVehicles = vehicleQueue.slice(runs.length > 0 && trucks.length ? 1 : 0);
+  if (normalJobs.length && remainingVehicles.length) {
+    // Split across vehicles if many jobs
+    const chunkSize = Math.ceil(normalJobs.length / Math.min(remainingVehicles.length, availableSlots.length - slotIdx));
+    for (let i = 0; i < remainingVehicles.length && slotIdx < availableSlots.length; i++) {
+      const chunk = normalJobs.slice(i * chunkSize, (i + 1) * chunkSize);
+      if (chunk.length) {
+        runs.push({ vehicle: remainingVehicles[i], jobs: chunk, slot: availableSlots[slotIdx++] });
+      }
+    }
+  }
+
+  // Save runs to Supabase
+  let created = 0;
+  for (const run of runs) {
+    const { data: newRun, error } = await sb.from('runs').insert({
+      branch_id:  App.branchId,
+      date:       viewDate,
+      slot:       run.slot,
+      vehicle_id: run.vehicle.id,
+      planned_by: App.staffId,
+      status:     'planned',
+    }).select().single();
+
+    if (error || !newRun) continue;
+
+    // Insert run_jobs with stop order
+    await sb.from('run_jobs').insert(
+      run.jobs.map((j, i) => ({
+        run_id:         newRun.id,
+        job_id:         j.id,
+        stop_order:     i + 1,
+        original_order: i + 1,
+      }))
+    );
+
+    // Update jobs with run slot
+    await sb.from('jobs').update({ run_slot: run.slot }).in('id', run.jobs.map(j => j.id));
+
+    created++;
+  }
+
+  showToast(`✓ Created ${created} run${created !== 1 ? 's' : ''} for ${viewDate}`);
+  await loadPage();
+}
+
+// ---- DEPART RUN ----
+async function departRun(runId) {
+  if (!confirm('Mark this run as departed from the yard?')) return;
+  const now = new Date().toISOString();
+  await sb.from('runs').update({ status: 'departed', departed_at: now }).eq('id', runId);
+
+  // Mark all loaded/picked jobs as departed
+  const run = allRuns.find(r => r.id === runId);
+  const jobIds = (run?.run_jobs || []).map(rj => rj.job_id);
+  if (jobIds.length) {
+    await sb.from('jobs').update({ status: 'departed', departed_at: now })
+      .in('id', jobIds).in('status', ['picked','loaded']);
+    for (const jid of jobIds) {
+      await sb.from('job_log').insert({ job_id: jid, action: 'Run departed', performed_by: App.staffId, performed_by_name: App.staff?.name });
+    }
+  }
+
+  showToast('Run departed — drivers are on the road');
+  await loadRuns();
+}
+
+// ---- ADVANCE STOP STATUS ----
+async function advanceStop(jobId, runId) {
+  const run = allRuns.find(r => r.id === runId);
+  const rj  = (run?.run_jobs || []).find(s => s.job_id === jobId);
+  const j   = rj?.jobs;
+  if (!j) return;
+  const next = STATUS_NEXT[j.status];
+  if (!next) return;
+
+  const updates = { status: next };
+  if (next === 'delivered') updates.locked = true;
+
+  await sb.from('jobs').update(updates).eq('id', jobId);
+  await sb.from('job_log').insert({ job_id: jobId, action: `Status → ${JOB_STATUSES[next]?.label}`, performed_by: App.staffId, performed_by_name: App.staff?.name });
+  showToast(`${j.invoice_number} → ${JOB_STATUSES[next]?.label}`);
+  await loadRuns();
+}
+
+// ---- REMOVE STOP FROM RUN ----
+async function removeStopFromRun(runId, jobId) {
+  if (!confirm('Remove this job from the run?')) return;
+  await sb.from('run_jobs').delete().eq('run_id', runId).eq('job_id', jobId);
+  await sb.from('jobs').update({ run_slot: 'unassigned' }).eq('id', jobId);
+  showToast('Job removed from run');
+  await loadPage();
+}
+
+// ---- RESET STOP ORDER ----
+async function resetStopOrder(runId) {
+  if (!confirm('Reset stops to original auto-sorted order?')) return;
+  const run = allRuns.find(r => r.id === runId);
+  const stops = (run?.run_jobs || []).sort((a, b) => a.original_order - b.original_order);
+  for (let i = 0; i < stops.length; i++) {
+    await sb.from('run_jobs').update({ stop_order: i + 1 }).eq('id', stops[i].id);
+  }
+  showToast('Stop order reset');
+  await loadRuns();
+}
+
+// ---- DRAG & DROP REORDER ----
+function dragStart(e, runJobId, runId) {
+  dragStopId = runJobId;
+  dragRunId  = runId;
+  setTimeout(() => document.getElementById('stop-' + runJobId)?.classList.add('dragging'), 0);
+}
+function allowDrop(e) { e.preventDefault(); }
+function dragEnd(e) {
+  document.querySelectorAll('.stop-card').forEach(el => {
+    el.classList.remove('dragging','drag-over');
+  });
+}
+async function dropStop(e, targetRunJobId, targetRunId) {
+  e.preventDefault();
+  if (!dragStopId || dragStopId === targetRunJobId || dragRunId !== targetRunId) return;
+
+  const run = allRuns.find(r => r.id === targetRunId);
+  const stops = (run?.run_jobs || []).sort((a, b) => a.stop_order - b.stop_order);
+  const fromIdx = stops.findIndex(s => s.id === dragStopId);
+  const toIdx   = stops.findIndex(s => s.id === targetRunJobId);
+  if (fromIdx === -1 || toIdx === -1) return;
+
+  // Reorder array
+  const moved = stops.splice(fromIdx, 1)[0];
+  stops.splice(toIdx, 0, moved);
+
+  // Update stop_order in DB
+  for (let i = 0; i < stops.length; i++) {
+    await sb.from('run_jobs').update({ stop_order: i + 1 }).eq('id', stops[i].id);
+  }
+
+  dragStopId = null;
+  dragRunId  = null;
+  await loadRuns();
+}
+
+// ---- QR CODE ----
+async function showRunQR(runId) {
+  const run = allRuns.find(r => r.id === runId);
+  if (!run) return;
+
+  // Get or create token
+  let { data: existing } = await sb.from('run_tokens')
+    .select('token,expires_at')
+    .eq('run_id', runId)
+    .gt('expires_at', new Date().toISOString())
+    .single();
+
+  let token;
+  if (existing) {
+    token = existing.token;
+  } else {
+    const { data: newToken } = await sb.from('run_tokens')
+      .insert({ run_id: runId })
+      .select('token')
+      .single();
+    token = newToken?.token;
+  }
+
+  if (!token) { showToast('Could not generate QR code', 'error'); return; }
+
+  const url = `${window.location.origin}/no1-delivery/driver-run.html?token=${token}`;
+  const jobs = (run.run_jobs || []).sort((a,b) => a.stop_order - b.stop_order).map(s => s.jobs).filter(Boolean);
+
+  document.getElementById('qr-body').innerHTML = `
+    <div style="margin-bottom:12px">
+      <div style="font-size:13px;font-weight:600;color:var(--text)">${run.slot} Run — ${run.vehicles?.name || 'TBA'}</div>
+      <div style="font-size:11px;color:var(--text2)">Driver: ${run.driver?.name || 'TBA'} · ${jobs.length} stops · ${fmtDate(run.date)}</div>
+    </div>
+    <canvas id="run-qr-canvas" style="display:block;margin:0 auto 12px"></canvas>
+    <div style="font-size:10px;color:var(--text3);word-break:break-all;margin-bottom:8px">${url}</div>
+    <div style="font-size:11px;color:var(--green);font-weight:500">✓ No login required · Expires in 48 hours</div>`;
+
+  document.getElementById('modal-qr').style.display = 'flex';
+
+  setTimeout(() => {
+    const canvas = document.getElementById('run-qr-canvas');
+    if (canvas && typeof QRCode !== 'undefined') {
+      canvas.width = 200;
+      canvas.height = 200;
+      new QRCode(canvas, {
+        text: url,
+        width: 200,
+        height: 200,
+        colorDark: '#00479f',
+        colorLight: '#ffffff',
+      });
+    }
+  }, 200);
+}
+
+// ---- PRINT SINGLE RUN ----
+function printRun(runId) {
+  // Hide all other runs, print, restore
+  allRuns.forEach(r => {
+    const el = document.getElementById('run-' + r.id);
+    if (el) el.style.display = r.id === runId ? 'block' : 'none';
+  });
+  window.print();
+  allRuns.forEach(r => {
+    const el = document.getElementById('run-' + r.id);
+    if (el) el.style.display = 'block';
+  });
+}
+
+// ---- DELETE RUN ----
+async function confirmDeleteRun(runId) {
+  if (!confirm('Delete this run? Jobs will be unassigned.')) return;
+  const run = allRuns.find(r => r.id === runId);
+  const jobIds = (run?.run_jobs || []).map(rj => rj.job_id);
+  if (jobIds.length) {
+    await sb.from('jobs').update({ run_slot: 'unassigned' }).in('id', jobIds);
+  }
+  await sb.from('runs').delete().eq('id', runId);
+  showToast('Run deleted');
+  await loadPage();
+}
+
+// ---- NEW / EDIT RUN MODAL ----
+async function openNewRunModal() {
+  document.getElementById('run-id').value = '';
+  document.getElementById('modal-run-title').textContent = 'New Run';
+  document.getElementById('delete-run-btn').style.display = 'none';
+  document.getElementById('run-date').value = viewDate;
+  document.getElementById('run-slot').value = '1st';
+  document.getElementById('run-notes').value = '';
+  populateVehicleSelector(null);
+  populateStaffDropdowns(null, null);
+  renderRunJobSelector(null);
+  document.getElementById('modal-run').style.display = 'flex';
+}
+
+async function openEditRun(runId) {
+  const run = allRuns.find(r => r.id === runId);
+  if (!run) return;
+  document.getElementById('run-id').value = runId;
+  document.getElementById('modal-run-title').textContent = 'Edit Run';
+  document.getElementById('delete-run-btn').style.display = 'block';
+  document.getElementById('run-date').value = run.date;
+  document.getElementById('run-slot').value = run.slot;
+  document.getElementById('run-notes').value = run.notes || '';
+  populateVehicleSelector(run.vehicle_id);
+  populateStaffDropdowns(run.driver_id, run.offsider_id);
+  renderRunJobSelector(run);
+  document.getElementById('modal-run').style.display = 'flex';
+}
+
+function populateVehicleSelector(selectedId) {
+  const el = document.getElementById('vehicle-selector');
+  el.innerHTML = allVehicles.map(v => `
+    <div class="vehicle-option ${v.id === selectedId ? 'selected' : ''}" onclick="selectVehicle(this,'${v.id}')" data-vid="${v.id}">
+      <div class="vehicle-icon" style="background:${v.type==='truck_9m'?'rgba(0,71,159,.1)':'rgba(14,116,144,.1)'}">
+        ${v.type === 'truck_9m' ? '🚛' : '🚐'}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${v.name}</div>
+        <div style="font-size:11px;color:var(--text2)">${v.type === 'truck_9m' ? '9m Truck' : 'Ute'} · max ${fmtLen(v.max_length_mm)}</div>
+      </div>
+      <div style="width:18px;height:18px;border-radius:50%;border:2px solid ${v.id===selectedId?'var(--brand)':'var(--border)'};background:${v.id===selectedId?'var(--brand)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        ${v.id===selectedId?'<div style="width:8px;height:8px;border-radius:50%;background:#fff"></div>':''}
+      </div>
+    </div>`).join('');
+}
+
+function selectVehicle(el, vid) {
+  document.querySelectorAll('.vehicle-option').forEach(o => {
+    o.classList.remove('selected');
+    o.querySelector('div:last-child').style.borderColor = 'var(--border)';
+    o.querySelector('div:last-child').style.background = 'transparent';
+    o.querySelector('div:last-child').innerHTML = '';
+  });
+  el.classList.add('selected');
+  el.querySelector('div:last-child').style.borderColor = 'var(--brand)';
+  el.querySelector('div:last-child').style.background = 'var(--brand)';
+  el.querySelector('div:last-child').innerHTML = '<div style="width:8px;height:8px;border-radius:50%;background:#fff"></div>';
+  checkRunLengthWarning();
+}
+
+function getSelectedVehicleId() {
+  return document.querySelector('.vehicle-option.selected')?.dataset.vid || null;
+}
+
+function populateStaffDropdowns(driverId, offsiderId) {
+  const drivers = allStaff;
+  ['run-driver','run-offsider'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.innerHTML = (i === 1 ? '<option value="">None</option>' : '<option value="">Select driver...</option>') +
+      drivers.map(s => `<option value="${s.id}" ${s.id===(i===0?driverId:offsiderId)?'selected':''}>${s.name} (${s.role})</option>`).join('');
+  });
+}
+
+function renderRunJobSelector(run) {
+  const assignedInOtherRuns = allRuns
+    .filter(r => r.id !== (run?.id))
+    .flatMap(r => (r.run_jobs || []).map(rj => rj.job_id));
+  const currentRunJobIds = (run?.run_jobs || []).map(rj => rj.job_id);
+
+  const el = document.getElementById('run-job-selector');
+  if (!allJobs.length) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--text3)">No undelivered jobs available.</div>';
+    return;
+  }
+
+  const sorted = [...allJobs].sort((a, b) => {
+    const ord = { priority:0, recovery:1, shed:2, standard:3 };
+    return (ord[a.type]||3)-(ord[b.type]||3) || (a.postcode||'').localeCompare(b.postcode||'');
+  });
+
+  el.innerHTML = sorted.map(j => {
+    const inOther = assignedInOtherRuns.includes(j.id);
+    const checked = currentRunJobIds.includes(j.id);
+    return `
+    <label style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:var(--radius);cursor:pointer;${inOther?'opacity:.45':''}" class="${j.type}">
+      <input type="checkbox" value="${j.id}" ${checked?'checked':''} ${inOther?'disabled':''} onchange="checkRunLengthWarning()">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+          <span class="invoice-num" style="font-size:11px">${j.invoice_number}</span>
+          ${typeTag(j.type)}
+          ${j.max_item_length_mm>6000?'<span class="tag tag-warn" style="font-size:9px">9m</span>':''}
+        </div>
+        <div style="font-size:12px;font-weight:500;color:var(--text)">${j.customer_name} — ${j.suburb_raw||''}</div>
+        <div style="font-size:10px;color:var(--text3)">${j.delivery_date?fmtDate(j.delivery_date)+' · ':''} max ${fmtLen(j.max_item_length_mm)}</div>
+      </div>
+      ${inOther?'<span style="font-size:10px;color:var(--text3)">In run</span>':''}
+    </label>`;
+  }).join('');
+}
+
+function checkRunLengthWarning() {
+  const vid = getSelectedVehicleId();
+  const v = allVehicles.find(x => x.id === vid);
+  const el = document.getElementById('run-length-warn');
+  if (!v) { el.innerHTML = ''; return; }
+  const checked = [...document.querySelectorAll('#run-job-selector input:checked')].map(cb => cb.value);
+  const badJobs = checked.map(id => allJobs.find(j => j.id === id)).filter(j => j && j.max_item_length_mm > v.max_length_mm);
+  el.innerHTML = badJobs.length
+    ? `<div class="alert alert-warn" style="font-size:12px">⚠ ${badJobs.length} job${badJobs.length>1?'s':''} exceed ${v.name} max length (${fmtLen(v.max_length_mm)}): ${badJobs.map(j=>j.customer_name).join(', ')}</div>`
+    : '';
+}
+
+async function saveRun() {
+  const runId = document.getElementById('run-id').value;
+  const vehicleId = getSelectedVehicleId();
+  const driverId  = document.getElementById('run-driver').value || null;
+  const offId     = document.getElementById('run-offsider').value || null;
+  const slot      = document.getElementById('run-slot').value;
+  const date      = document.getElementById('run-date').value;
+  const notes     = document.getElementById('run-notes').value.trim() || null;
+  const jobIds    = [...document.querySelectorAll('#run-job-selector input:checked')].map(cb => cb.value);
+
+  if (!vehicleId) { showToast('Select a vehicle', 'error'); return; }
+  if (!jobIds.length) { showToast('Select at least one job', 'error'); return; }
+
+  const btn = document.getElementById('save-run-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  // Sort jobs by postcode for smart order
+  const selectedJobs = jobIds.map(id => allJobs.find(j => j.id === id)).filter(Boolean);
+  selectedJobs.sort((a,b) => (a.postcode||'').localeCompare(b.postcode||''));
+
+  const runData = { date, slot, vehicle_id: vehicleId, driver_id: driverId, offsider_id: offId, notes, planned_by: App.staffId, branch_id: App.branchId };
+
+  let savedRunId = runId;
+  if (runId) {
+    await sb.from('runs').update(runData).eq('id', runId);
+    await sb.from('run_jobs').delete().eq('run_id', runId);
+  } else {
+    const { data } = await sb.from('runs').insert({ ...runData, status:'planned' }).select().single();
+    savedRunId = data?.id;
+  }
+
+  if (!savedRunId) { showToast('Could not save run', 'error'); btn.disabled=false; btn.textContent='Save Run'; return; }
+
+  await sb.from('run_jobs').insert(
+    selectedJobs.map((j, i) => ({ run_id: savedRunId, job_id: j.id, stop_order: i+1, original_order: i+1 }))
+  );
+  await sb.from('jobs').update({ run_slot: slot }).in('id', selectedJobs.map(j=>j.id));
+
+  btn.disabled = false; btn.textContent = 'Save Run';
+  closeModal('modal-run');
+  showToast(runId ? 'Run updated ✓' : 'Run created ✓');
+  await loadPage();
+}
+
+async function deleteRun() {
+  const runId = document.getElementById('run-id').value;
+  if (!runId || !confirm('Delete this run?')) return;
+  const run = allRuns.find(r => r.id === runId);
+  const jobIds = (run?.run_jobs||[]).map(rj=>rj.job_id);
+  if (jobIds.length) await sb.from('jobs').update({ run_slot:'unassigned' }).in('id', jobIds);
+  await sb.from('runs').delete().eq('id', runId);
+  closeModal('modal-run');
+  showToast('Run deleted');
+  await loadPage();
+}
+
+init();
+</script>
+</body>
+</html>
