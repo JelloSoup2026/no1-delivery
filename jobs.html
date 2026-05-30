@@ -117,7 +117,7 @@
 </div>
 
 <!-- JOB MODAL -->
-<div id="modal-job" class="modal-overlay" style="display:none" onclick="closeModal('modal-job',event)">
+<div id="modal-job" class="modal-overlay" style="display:none">
 <div class="modal" onclick="event.stopPropagation()">
   <div class="modal-header">
     <div class="modal-title" id="modal-job-title">New Job</div>
@@ -165,7 +165,7 @@
       </div>
       <div class="form-group">
         <div class="form-label">Postcode</div>
-        <input class="form-input" id="job-postcode" placeholder="2750" maxlength="4">
+        <input class="form-input" id="job-postcode" placeholder="2750" maxlength="4" oninput="lookupPostcode(this.value)">
       </div>
       <div class="form-group">
         <div class="form-label">Region</div>
@@ -194,21 +194,26 @@
       </div>
     </div>
     <!-- PO -->
-    <div style="background:var(--teal-bg);border:0.5px solid var(--teal-border);border-radius:var(--radius);padding:12px">
-      <div style="font-size:11px;font-weight:600;color:var(--teal);margin-bottom:8px;letter-spacing:.3px">SUPPLIER COLLECTION (optional)</div>
-      <div class="form-row">
-        <div class="form-group">
-          <div class="form-label">PO Number</div>
-          <input class="form-input mono" id="job-po" placeholder="PO-0001" style="font-weight:600">
+    <div>
+      <button type="button" onclick="toggleSupplier()" style="background:none;border:0.5px solid var(--teal-border);border-radius:var(--radius);padding:7px 12px;font-size:12px;font-weight:600;color:var(--teal);cursor:pointer;font-family:var(--font);width:100%;text-align:left">
+        <span id="supplier-toggle-label">+ Add supplier / PO collection (optional)</span>
+      </button>
+      <div id="supplier-section" style="display:none;margin-top:8px;background:var(--teal-bg);border:0.5px solid var(--teal-border);border-radius:var(--radius);padding:12px">
+        <div style="font-size:11px;font-weight:600;color:var(--teal);margin-bottom:8px;letter-spacing:.3px">SUPPLIER COLLECTION</div>
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">PO Number</div>
+            <input class="form-input mono" id="job-po" placeholder="PO-0001" style="font-weight:600">
+          </div>
+          <div class="form-group">
+            <div class="form-label">Supplier</div>
+            <input class="form-input" id="job-supplier" placeholder="e.g. BlueScope Steel">
+          </div>
         </div>
-        <div class="form-group">
-          <div class="form-label">Supplier</div>
-          <input class="form-input" id="job-supplier" placeholder="e.g. BlueScope Steel">
+        <div class="form-group" style="margin-top:8px">
+          <div class="form-label">Supplier address</div>
+          <input class="form-input" id="job-supplier-addr" placeholder="Collection address">
         </div>
-      </div>
-      <div class="form-group" style="margin-top:8px">
-        <div class="form-label">Supplier address</div>
-        <input class="form-input" id="job-supplier-addr" placeholder="Collection address">
       </div>
     </div>
     <!-- ITEMS -->
@@ -451,7 +456,7 @@ function jobCardHTML(j) {
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
         ${statusPill(j.status)}
         ${j.delivery_date ? `<span style="font-size:11px;color:var(--text3)">${fmtDate(j.delivery_date)}</span>` : ''}
-        ${mapsLink(j.address_raw)}
+        ${mapsLink(j.address_raw, j.suburb_raw, j.postcode)}
       </div>
     </div>
 
@@ -681,6 +686,7 @@ async function openLabelModal(jobId) {
 
   document.getElementById('modal-label').style.display = 'flex';
   const items = j.job_items || [];
+  const fullAddr = [j.address_raw, j.suburb_raw, j.postcode].filter(Boolean).join(', ');
   const qrData = `${window.location.origin}/no1-delivery/job.html?id=${j.id}`;
 
   document.getElementById('label-body').innerHTML = `
@@ -783,6 +789,7 @@ function openNewJobModal() {
   document.getElementById('shed-dates').style.display = 'none';
   addItemRow();
   document.getElementById('modal-job').style.display = 'flex';
+  setTimeout(() => document.getElementById('job-invoice')?.focus(), 100);
 }
 
 async function openEditJob(jobId) {
@@ -890,6 +897,125 @@ async function deleteJob() {
   closeModal('modal-job');
   showToast('Job deleted');
   await loadJobs();
+}
+
+// Toggle supplier section
+function toggleSupplier() {
+  const sec = document.getElementById('supplier-section');
+  const lbl = document.getElementById('supplier-toggle-label');
+  const isHidden = sec.style.display === 'none';
+  sec.style.display = isHidden ? 'block' : 'none';
+  lbl.textContent = isHidden ? '− Hide supplier / PO section' : '+ Add supplier / PO collection (optional)';
+}
+
+// NSW postcode to suburb lookup (common Sydney/regional postcodes)
+const POSTCODE_MAP = {
+  '2000':'Sydney','2010':'Surry Hills','2016':'Redfern','2020':'Mascot',
+  '2026':'Bondi','2031':'Randwick','2033':'Kingsford','2042':'Newtown',
+  '2048':'Balmain','2060':'North Sydney','2065':'St Leonards','2066':'Lane Cove',
+  '2067':'Chatswood','2068':'Willoughby','2072':'Pymble','2073':'Turramurra',
+  '2076':'Hornsby','2077':'Asquith','2080':'Mount Colah','2082':'Wisemans Ferry',
+  '2083':'Brooklyn','2085':'Mosman','2086':'Narrabeen','2087':'Frenchs Forest',
+  '2088':'Mosman','2089':'Neutral Bay','2090':'Cremorne','2092':'Seaforth',
+  '2093':'Manly','2095':'Manly','2099':'Dee Why','2100':'Curl Curl',
+  '2101':'Collaroy','2102':'Narrabeen','2103':'Mona Vale','2106':'Palm Beach',
+  '2107':'Avalon','2110':'Ryde','2111':'Rhodes','2112':'Ryde',
+  '2113':'Meadowbank','2114':'Eastwood','2115':'Ermington','2116':'Ryde',
+  '2117':'Pendle Hill','2118':'Carlingford','2119':'Beecroft','2120':'Pennant Hills',
+  '2121':'Epping','2122':'Eastwood','2125':'West Pennant Hills','2126':'Cherrybrook',
+  '2127':'Newington','2128':'Silverwater','2130':'Summer Hill','2131':'Ashfield',
+  '2132':'Burwood','2133':'Burwood','2134':'Strathfield','2135':'Strathfield',
+  '2136':'Burwood','2137':'Concord','2138':'Rhodes','2139':'Rozelle',
+  '2140':'Homebush','2141':'Berala','2142':'Granville','2143':'Fairfield',
+  '2144':'Auburn','2145':'Westmead','2146':'Toongabbie','2147':'Kings Langley',
+  '2148':'Blacktown','2150':'Parramatta','2151':'North Rocks','2152':'Baulkham Hills',
+  '2153':'Baulkham Hills','2154':'Castle Hill','2155':'Rouse Hill','2156':'Glenhaven',
+  '2157':'Galston','2158':'Dural','2159':'Arcadia','2160':'Merrylands',
+  '2161':'Guildford','2162':'Chester Hill','2163':'Villawood','2164':'Smithfield',
+  '2165':'Fairfield','2166':'Canley Vale','2167':'Cabramatta','2168':'Miller',
+  '2170':'Liverpool','2171':'Casula','2172':'Moorebank','2173':'Pleasure Point',
+  '2174':'Holsworthy','2175':'Horningsea Park','2176':'Wetherill Park','2177':'Bossley Park',
+  '2178':'Horsley Park','2179':'Rossmore','2190':'Greenacre','2191':'Lakemba',
+  '2192':'Belmore','2193':'Canterbury','2194':'Campsie','2195':'Lakemba',
+  '2196':'Punchbowl','2197':'Bass Hill','2198':'Georges Hall','2199':'Bankstown',
+  '2200':'Bankstown','2203':'Dulwich Hill','2204':'Marrickville','2205':'Arncliffe',
+  '2206':'Earlwood','2207':'Bexley','2208':'Kingsgrove','2209':'Beverly Hills',
+  '2210':'Lugarno','2211':'Padstow','2212':'Revesby','2213':'Revesby',
+  '2214':'Padstow Heights','2216':'Rockdale','2217':'Ramsgate','2218':'Kogarah',
+  '2219':'Dolls Point','2220':'Hurstville','2221':'Blakehurst','2222':'Penshurst',
+  '2223':'Mortdale','2224':'Oyster Bay','2225':'Como','2226':'Jannali',
+  '2227':'Miranda','2228':'Caringbah','2229':'Lilli Pilli','2230':'Cronulla',
+  '2232':'Sutherland','2233':'Kirrawee','2234':'Menai','2250':'Gosford',
+  '2251':'Avoca Beach','2256':'Woy Woy','2257':'Terrigal','2258':'Wyong',
+  '2259':'Tuggerah','2260':'The Entrance','2261':'Blue Haven','2262':'Budgewoi',
+  '2263':'Toukley','2264':'Lake Munmorah','2265':'Morisset','2281':'Swansea',
+  '2283':'Toronto','2284':'Charlestown','2285':'Hamilton','2289':'Jesmond',
+  '2290':'Lambton','2291':'Merewether','2292':'Hamilton','2293':'Islington',
+  '2295':'Mayfield','2296':'Islington','2297':'Georgetown','2298':'Waratah',
+  '2299':'Wallsend','2300':'Newcastle','2302':'Newcastle','2303':'Hamilton',
+  '2304':'Broadmeadow','2305':'New Lambton','2306':'Wallsend','2307':'Jesmond',
+  '2308':'University of Newcastle','2315':'Nelson Bay','2316':'Shoal Bay',
+  '2317':'Corlette','2318':'Medowie','2319':'Mallabula','2320':'Maitland',
+  '2321':'Cessnock','2322':'Branxton','2323':'Rutherford','2324':'Paxton',
+  '2325':'Cessnock','2326':'Aberdare','2327':'Kurri Kurri','2328':'Muswellbrook',
+  '2330':'Singleton','2333':'Denman','2335':'Broke','2340':'Tamworth',
+  '2350':'Armidale','2360':'Glen Innes','2370':'Inverell','2380':'Narrabri',
+  '2390':'Moree','2400':'Walgett','2460':'Grafton','2470':'Lismore',
+  '2480':'Byron Bay','2481':'Byron Bay','2482':'Bangalow','2483':'Mullumbimby',
+  '2484':'Murwillumbah','2485':'Tweed Heads','2486':'Tweed Heads','2487':'Pottsville',
+  '2488':'Kingscliff','2489':'Cabarita Beach','2500':'Wollongong','2502':'Warrawong',
+  '2505':'Port Kembla','2506':'Unanderra','2508':'Helensburgh','2515':'Thirroul',
+  '2516':'Bulli','2517':'Austinmer','2518':'Corrimal','2519':'Wollongong',
+  '2520':'Wollongong','2525':'Fairy Meadow','2526':'Figtree','2527':'Albion Park',
+  '2528':'Shell Cove','2529':'Oak Flats','2530':'Dapto','2533':'Berry',
+  '2534':'Nowra','2536':'Batemans Bay','2537':'Braidwood','2538':'Ulladulla',
+  '2539':'Milton','2540':'Nowra','2541':'Nowra','2546':'Bega',
+  '2548':'Merimbula','2550':'Merimbula','2560':'Campbelltown','2563':'Camden',
+  '2564':'Ingleburn','2565':'Leumeah','2566':'Minto','2567':'Narellan',
+  '2568':'Narellan Vale','2569':'Camden','2570':'Camden','2571':'Picton',
+  '2572':'Bargo','2573':'Tahmoor','2574':'Thirlmere','2575':'Mittagong',
+  '2576':'Bowral','2577':'Moss Vale','2578':'Bundanoon','2579':'Marulan',
+  '2580':'Goulburn','2582':'Gunning','2583':'Crookwell','2584':'Yass',
+  '2585':'Young','2586':'Boorowa','2587':'Cootamundra','2588':'Temora',
+  '2590':'Wagga Wagga','2594':'Harden','2600':'Canberra','2601':'Braddon',
+  '2602':'Downer','2603':'Griffith','2604':'Deakin','2605':'Curtin',
+  '2606':'Chifley','2607':'Calwell','2608':'Fyshwick','2609':'Pialligo',
+  '2610':'Curtin','2611':'Weston Creek','2612':'Turner','2614':'Evatt',
+  '2615':'Charnwood','2616':'Holt','2617':'Gungahlin','2618':'Hall',
+  '2619':'Jerrabomberra','2620':'Queanbeyan','2621':'Bungendore','2630':'Cooma',
+  '2640':'Albury','2641':'Lavington','2642':'Jindera','2643':'Howlong',
+  '2644':'Holbrook','2645':'Culcairn','2646':'Henty','2647':'Walbundrie',
+  '2648':'Wentworth','2650':'Wagga Wagga','2651':'Wagga Wagga','2652':'Coolamon',
+  '2680':'Griffith','2700':'Narrandera','2710':'Hay','2720':'Tumut',
+  '2730':'Tumbarumba','2740':'Bathurst','2745':'Penrith','2747':'St Marys',
+  '2748':'Penrith','2749':'Penrith','2750':'Penrith','2752':'Yarramundi',
+  '2753':'Richmond','2754':'Windsor','2755':'Windsor','2756':'Wilberforce',
+  '2757':'Kurrajong','2758':'Kurrajong Heights','2759':'Emu Plains','2760':'Kingswood',
+  '2761':'Blacktown','2762':'Marsden Park','2763':'Blacktown','2765':'Riverstone',
+  '2766':'Rooty Hill','2767':'Eastern Creek','2768':'Stanhope Gardens','2769':'The Ponds',
+  '2770':'Mount Druitt','2773':'Springwood','2774':'Faulconbridge','2775':'Kurrajong',
+  '2776':'Blaxland','2777':'Glenbrook','2778':'Hazelbrook','2779':'Woodford',
+  '2780':'Katoomba','2782':'Leura','2783':'Wentworth Falls','2784':'Blackheath',
+  '2785':'Mount Victoria','2786':'Lithgow','2787':'Oberon','2790':'Bathurst',
+  '2795':'Bathurst','2800':'Orange','2820':'Wellington','2830':'Dubbo',
+  '2840':'Bourke','2850':'Mudgee','2860':'Parkes','2870':'Forbes',
+  '2880':'Broken Hill','2890':'Dareton',
+  // Prestons area
+  '2170':'Liverpool','2171':'Casula','2172':'Moorebank','2173':'Pleasure Point',
+  '2174':'Holsworthy','2175':'Horningsea Park','2176':'Wetherill Park',
+  '2177':'Bossley Park','2178':'Horsley Park','2179':'Rossmore',
+  '2197':'Bass Hill','2198':'Georges Hall','2199':'Bankstown',
+};
+
+function lookupPostcode(postcode) {
+  if (postcode.length !== 4) return;
+  const suburb = POSTCODE_MAP[postcode];
+  if (suburb) {
+    const suburbEl = document.getElementById('job-suburb');
+    if (suburbEl && !suburbEl.value) {
+      suburbEl.value = suburb;
+    }
+  }
 }
 
 init();
