@@ -383,6 +383,10 @@ function injectSharedStyles() {
 
     /* INVOICE NUMBER */
     .invoice-num { font-family:var(--mono); font-weight:700; color:var(--brand); font-size:13px; letter-spacing:.3px; }
+    .stat-card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius-lg); padding:16px 20px; position:relative; overflow:hidden; }
+    .stat-card-accent { position:absolute; top:0; left:0; right:0; height:3px; }
+    .stat-val { font-size:32px; font-weight:700; line-height:1; margin-bottom:4px; }
+    .stat-label { font-size:11px; font-weight:600; color:var(--text3); letter-spacing:.4px; text-transform:uppercase; }
 
     /* RESPONSIVE */
     @media(max-width:768px) {
