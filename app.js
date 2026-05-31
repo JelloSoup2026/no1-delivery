@@ -61,12 +61,16 @@ const ROLE_ROUTES = {
 
 // ---- STATUS DEFINITIONS ----
 const JOB_STATUSES = {
-  unpicked:  { label: 'Unpicked',  color: '#a3a4a4', bg: '#f0f4f8' },
-  picked:    { label: 'Picked',    color: '#8a5a00', bg: '#fef3dc' },
-  loaded:    { label: 'Loaded',    color: '#0e7490', bg: '#ecfeff' },
-  departed:  { label: 'Departed',  color: '#5b21b6', bg: '#f5f3ff' },
-  arrived:   { label: 'Arrived',   color: '#00479f', bg: '#e5ebef' },
-  delivered: { label: 'Delivered', color: '#1a7a4a', bg: '#e8f5ee' },
+  unpicked:            { label:'Unpicked',            color:'#a3a4a4', bg:'#f0f4f8' },
+  waiting_ibt:         { label:'Waiting IBT',         color:'#5b21b6', bg:'#f5f3ff' },
+  waiting_supplier:    { label:'Waiting Supplier',    color:'#0e7490', bg:'#ecfeff' },
+  waiting_fabrication: { label:'Waiting Fabrication', color:'#8a5a00', bg:'#fef3dc' },
+  part_picked:         { label:'Part Picked',         color:'#b45309', bg:'#fef3dc' },
+  ready:               { label:'Ready',               color:'#065f46', bg:'#d1fae5' },
+  loaded:              { label:'Loaded',              color:'#0e7490', bg:'#ecfeff' },
+  departed:            { label:'Departed',            color:'#1d4ed8', bg:'#dbeafe' },
+  arrived:             { label:'Arrived',             color:'#00479f', bg:'#e5ebef' },
+  delivered:           { label:'Delivered',           color:'#1a7a4a', bg:'#e8f5ee' },
 };
 
 const STATUS_NEXT = {

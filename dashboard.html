@@ -322,7 +322,7 @@ function setGreeting() {
 
 // ---- STATS ----
 async function loadStats() {
-  const { data: jobs } = await sb.from('jobs').select('status,type');
+  const { data: jobs } = await sb.from('jobs').select('status,type').neq('status','delivered');
   if (!jobs) return;
   const total    = jobs.length;
   const undel    = jobs.filter(j => j.status !== 'delivered').length;
@@ -482,7 +482,7 @@ async function loadTodaysRuns() {
             <div style="font-size:11px;color:var(--text2);margin-top:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span>${j.suburb || ''}</span>
               ${j.customer_phone ? phoneLink(j.customer_phone) : ''}
-              ${mapsLink(j.address_raw)}
+              ${mapsLink(j.address_raw, j.suburb_raw, j.postcode)}
             </div>
           </div>
         </div>`).join('')}
@@ -581,7 +581,7 @@ function jobCardHTML(j, showActions = true) {
     <div class="job-card-actions">
       ${j.status !== 'delivered' ? `<button class="btn btn-primary btn-sm" onclick="openAdvanceModal('${j.id}')">→ ${JOB_STATUSES[STATUS_NEXT[j.status]]?.label || ''}</button>` : ''}
       <button class="btn btn-ghost btn-sm" onclick="openEditJob('${j.id}')">Edit</button>
-      ${mapsLink(j.address_raw)}
+      ${mapsLink(j.address_raw, j.suburb_raw, j.postcode)}
     </div>` : ''}
     ${j.locked ? `<div style="font-size:11px;color:var(--green);margin-top:8px;font-weight:600">✓ Delivered &amp; locked — ${fmtDateTime(j.delivered_at)}</div>` : ''}
   </div>`;
