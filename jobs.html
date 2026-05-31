@@ -12,92 +12,85 @@
 .job-card.recovery{border-left:3px solid var(--red-border)}
 .job-card.shed{border-left:3px solid var(--teal-border)}
 .job-card.locked-card{opacity:.85}
-.job-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
-.job-card-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-.filter-bar{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
-.filter-group{display:flex;flex-direction:column;gap:4px}
-.filter-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.4px;text-transform:uppercase}
+.job-card.is-6am{border-left:3px solid #dc2626;border-top:2px solid #dc2626}
+.filter-bar{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.filter-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.4px;text-transform:uppercase;margin-bottom:3px}
 .filter-input,.filter-select{border:0.5px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-family:var(--font);font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border .15s}
 .filter-input:focus,.filter-select:focus{border-color:var(--brand)}
-.filter-input{min-width:160px}
 .log-entry{display:flex;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border);align-items:flex-start}
 .log-entry:last-child{border-bottom:none}
 .log-dot{width:8px;height:8px;border-radius:50%;background:var(--brand);margin-top:5px;flex-shrink:0}
-.item-row-grid{display:grid;grid-template-columns:1fr 72px 104px 28px;gap:6px;margin-bottom:6px;align-items:center}
-.qr-label{background:#fff;border:1px solid #ccc;border-radius:8px;padding:16px;width:300px;font-family:var(--mono)}
-.qr-label-invoice{font-size:16px;font-weight:700;color:#00479f;margin-bottom:4px}
-.qr-label-customer{font-size:14px;font-weight:600;color:#1a1a2e;margin-bottom:2px}
-.qr-label-address{font-size:11px;color:#565656;margin-bottom:8px}
-.qr-label-items{font-size:11px;color:#1a1a2e;margin-bottom:8px;line-height:1.6}
-.qr-placeholder{width:80px;height:80px;border:2px dashed #b4cbe1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#a3a4a4;text-align:center;margin:0 auto}
-@media print{
-  #topbar,.filter-bar,.job-card-actions,.no-print{display:none!important}
-  .job-card{border:1px solid #ccc;break-inside:avoid;margin-bottom:12px}
-  body{background:#fff}
-}
+/* Customer autocomplete */
+.autocomplete-wrap{position:relative}
+.autocomplete-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:0.5px solid var(--border2);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:100;max-height:200px;overflow-y:auto;margin-top:2px}
+.autocomplete-item{padding:10px 12px;cursor:pointer;font-size:13px;border-bottom:0.5px solid var(--border);transition:background .1s}
+.autocomplete-item:last-child{border-bottom:none}
+.autocomplete-item:hover{background:var(--bg)}
+.autocomplete-item-name{font-weight:600;color:var(--text)}
+.autocomplete-item-sub{font-size:11px;color:var(--text3);margin-top:1px}
+/* Address autocomplete */
+.addr-suggestion{padding:9px 12px;cursor:pointer;font-size:12px;border-bottom:0.5px solid var(--border);color:var(--text2);transition:background .1s}
+.addr-suggestion:hover{background:var(--bg);color:var(--text)}
+.addr-suggestion:last-child{border-bottom:none}
+/* Readiness badge */
+.readiness-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
+/* Quick status buttons */
+.quick-status{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;border:0.5px solid;cursor:pointer;font-family:var(--font);transition:all .15s}
+.ibt-badge{background:#f5f3ff;color:#5b21b6;border-color:#c4b5fd;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:3px}
 </style>
 </head>
 <body>
 <div id="topbar"></div>
 <div class="page-wrap">
 
-  <!-- HEADER -->
-  <div class="section-header" style="margin-bottom:16px">
+  <div class="section-header" style="margin-bottom:14px">
     <div>
       <div class="section-title">Jobs</div>
       <div class="section-sub" id="jobs-sub">Loading...</div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap" class="no-print">
-      <button class="btn btn-ghost" onclick="window.print()">🖨 Print list</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="window.print()">🖨 Print</button>
       <button class="btn btn-primary" onclick="openNewJobModal()">+ New Job</button>
     </div>
   </div>
 
   <!-- FILTER BAR -->
   <div class="filter-bar no-print">
-    <div class="filter-group">
+    <div>
       <div class="filter-label">Search</div>
-      <input class="filter-input" id="f-search" placeholder="Invoice, customer, suburb..." oninput="applyFilters()">
+      <input class="filter-input" id="f-search" placeholder="Invoice, customer, suburb..." oninput="applyFilters()" style="min-width:180px">
     </div>
-    <div class="filter-group">
+    <div>
       <div class="filter-label">Status</div>
       <select class="filter-select" id="f-status" onchange="applyFilters()">
-        <option value="">All statuses</option>
+        <option value="">All</option>
         <option value="unpicked">Unpicked</option>
-        <option value="picked">Picked</option>
+        <option value="waiting_ibt">Waiting IBT</option>
+        <option value="waiting_supplier">Waiting Supplier</option>
+        <option value="waiting_fabrication">Waiting Fabrication</option>
+        <option value="part_picked">Part Picked</option>
+        <option value="ready">Ready</option>
         <option value="loaded">Loaded</option>
         <option value="departed">Departed</option>
         <option value="arrived">Arrived</option>
         <option value="delivered">Delivered</option>
       </select>
     </div>
-    <div class="filter-group">
+    <div>
       <div class="filter-label">Type</div>
       <select class="filter-select" id="f-type" onchange="applyFilters()">
-        <option value="">All types</option>
+        <option value="">All</option>
         <option value="standard">Standard</option>
         <option value="priority">Priority</option>
         <option value="recovery">Recovery</option>
         <option value="shed">Shed</option>
       </select>
     </div>
-    <div class="filter-group">
-      <div class="filter-label">Region</div>
-      <select class="filter-select" id="f-region" onchange="applyFilters()">
-        <option value="">All regions</option>
-        <option value="sydney-metro">Sydney Metro</option>
-        <option value="regional-nsw">Regional NSW</option>
-        <option value="act">ACT</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <div class="filter-label">Date</div>
-      <input class="filter-input" type="date" id="f-date" style="min-width:140px" onchange="applyFilters()">
-    </div>
-    <div class="filter-group">
-      <div class="filter-label">Run slot</div>
+    <div>
+      <div class="filter-label">Run</div>
       <select class="filter-select" id="f-slot" onchange="applyFilters()">
-        <option value="">All slots</option>
+        <option value="">All</option>
+        <option value="6am">6am Drop</option>
         <option value="1st">1st Run</option>
         <option value="2nd">2nd Run</option>
         <option value="3rd">3rd Run</option>
@@ -106,59 +99,93 @@
         <option value="unassigned">Unassigned</option>
       </select>
     </div>
+    <div>
+      <div class="filter-label">Date</div>
+      <input class="filter-input" type="date" id="f-date" onchange="applyFilters()" style="min-width:140px">
+    </div>
+    <div>
+      <div class="filter-label">Readiness</div>
+      <select class="filter-select" id="f-readiness" onchange="applyFilters()">
+        <option value="">All</option>
+        <option value="in_stock">In stock</option>
+        <option value="needs_ibt">Needs IBT</option>
+        <option value="needs_supplier">Needs supplier</option>
+        <option value="needs_fabrication">Needs fabrication</option>
+        <option value="direct_supplier">Direct supplier</option>
+      </select>
+    </div>
     <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Clear</button>
   </div>
 
-  <!-- JOBS LIST -->
-  <div id="jobs-list">
-    <div class="loading-wrap"><div class="spinner spinner-lg"></div></div>
-  </div>
-
+  <div id="jobs-list"><div class="loading-wrap"><div class="spinner spinner-lg"></div></div></div>
 </div>
 
 <!-- JOB MODAL -->
 <div id="modal-job" class="modal-overlay" style="display:none">
-<div class="modal" onclick="event.stopPropagation()">
+<div class="modal" onclick="event.stopPropagation()" style="max-width:680px">
   <div class="modal-header">
     <div class="modal-title" id="modal-job-title">New Job</div>
     <button class="modal-close" onclick="closeModal('modal-job')">&times;</button>
   </div>
   <input type="hidden" id="job-id">
-  <div style="display:flex;flex-direction:column;gap:14px">
+
+  <div style="display:flex;flex-direction:column;gap:12px">
+
+    <!-- ROW 1: Invoice + Type + 6am toggle -->
     <div class="form-row">
       <div class="form-group">
         <div class="form-label">Invoice #</div>
-        <input class="form-input mono" id="job-invoice" placeholder="INV-0001" style="font-weight:700;color:var(--brand)">
+        <input class="form-input mono" id="job-invoice" placeholder="INV-0001" style="font-weight:700;color:var(--brand)" autocomplete="off">
       </div>
       <div class="form-group">
         <div class="form-label">Job type</div>
         <select class="form-select" id="job-type" onchange="toggleShedDates()">
           <option value="standard">📦 Standard</option>
-          <option value="priority">⚡ Priority — 7am</option>
+          <option value="priority">⚡ Priority 7am</option>
           <option value="recovery">🔴 Recovery</option>
           <option value="shed">🏠 Shed</option>
         </select>
       </div>
-    </div>
-    <div class="form-row">
       <div class="form-group">
+        <div class="form-label">Run slot</div>
+        <select class="form-select" id="job-run-slot">
+          <option value="unassigned">Unassigned</option>
+          <option value="6am">⚡ 6am Drop</option>
+          <option value="1st">1st Run</option>
+          <option value="2nd">2nd Run</option>
+          <option value="3rd">3rd Run</option>
+          <option value="4th">4th Run</option>
+          <option value="5th">5th Run</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ROW 2: Customer with autocomplete -->
+    <div class="form-row">
+      <div class="form-group" style="position:relative">
         <div class="form-label">Customer name</div>
-        <input class="form-input" id="job-customer" placeholder="Full name">
+        <div class="autocomplete-wrap">
+          <input class="form-input" id="job-customer" placeholder="Start typing to search customers..." autocomplete="off" oninput="searchCustomers(this.value)">
+          <div id="customer-dropdown" class="autocomplete-dropdown" style="display:none"></div>
+        </div>
       </div>
       <div class="form-group">
         <div class="form-label">Phone</div>
         <input class="form-input" id="job-phone" placeholder="04XX XXX XXX">
       </div>
     </div>
-    <div class="form-group">
-      <div class="form-label">Email (optional)</div>
-      <input class="form-input" id="job-email" placeholder="customer@email.com" type="email">
-    </div>
-    <div class="form-group">
+
+    <!-- ROW 3: Address with GNAF autocomplete -->
+    <div class="form-group" style="position:relative">
       <div class="form-label">Delivery address</div>
-      <input class="form-input" id="job-address" placeholder="e.g. 42 Smith St, Penrith NSW 2750">
+      <div class="autocomplete-wrap">
+        <input class="form-input" id="job-address" placeholder="Start typing address..." autocomplete="off" oninput="searchAddress(this.value)">
+        <div id="address-dropdown" class="autocomplete-dropdown" style="display:none"></div>
+      </div>
     </div>
-    <div class="form-row3">
+
+    <!-- ROW 4: Suburb + Postcode + Region + Date -->
+    <div class="form-row">
       <div class="form-group">
         <div class="form-label">Suburb</div>
         <input class="form-input" id="job-suburb" placeholder="e.g. Penrith">
@@ -175,25 +202,77 @@
           <option value="act">ACT</option>
         </select>
       </div>
-    </div>
-    <div class="form-row">
       <div class="form-group">
         <div class="form-label">Delivery date</div>
         <input class="form-input" type="date" id="job-del-date">
       </div>
+    </div>
+
+    <!-- ROW 5: Readiness -->
+    <div class="form-row">
       <div class="form-group">
-        <div class="form-label">Run slot</div>
-        <select class="form-select" id="job-run-slot">
-          <option value="unassigned">Unassigned</option>
-          <option value="1st">1st Run</option>
-          <option value="2nd">2nd Run</option>
-          <option value="3rd">3rd Run</option>
-          <option value="4th">4th Run</option>
-          <option value="5th">5th Run</option>
+        <div class="form-label">Stock readiness</div>
+        <select class="form-select" id="job-readiness" onchange="toggleIBTFields()">
+          <option value="in_stock">✓ In stock — ready to pick</option>
+          <option value="needs_ibt">🔄 Needs IBT</option>
+          <option value="needs_supplier">📦 Needs supplier pickup</option>
+          <option value="needs_fabrication">🔧 Needs fabrication</option>
+          <option value="direct_supplier">🚚 Direct from supplier</option>
         </select>
       </div>
     </div>
-    <!-- PO -->
+
+    <!-- IBT Fields (hidden by default) -->
+    <div id="ibt-fields" style="display:none;background:#f5f3ff;border:0.5px solid #c4b5fd;border-radius:var(--radius);padding:12px">
+      <div style="font-size:11px;font-weight:600;color:#5b21b6;margin-bottom:8px;letter-spacing:.3px">IBT DETAILS</div>
+      <div class="form-row">
+        <div class="form-group">
+          <div class="form-label">From branch</div>
+          <input class="form-input" id="job-ibt-branch" placeholder="e.g. Penrith">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Expected arrival</div>
+          <input class="form-input" type="date" id="job-ibt-date">
+        </div>
+      </div>
+    </div>
+
+    <!-- ITEMS -->
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div class="form-label">Order items</div>
+        <button class="btn btn-ghost btn-sm" onclick="addItemRow()">+ Add item</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 72px 110px 28px;gap:6px;margin-bottom:4px;padding:0 2px">
+        <span style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px">PRODUCT / DESCRIPTION</span>
+        <span style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px">QTY</span>
+        <span style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px">LENGTH (mm)</span>
+        <span></span>
+      </div>
+      <div id="items-container"></div>
+      <div id="max-len-display" style="font-size:12px;color:var(--text2);margin-top:6px;min-height:18px"></div>
+    </div>
+
+    <!-- SHED DATES (hidden by default) -->
+    <div id="shed-dates" style="display:none;background:var(--teal-bg);border:0.5px solid var(--teal-border);border-radius:var(--radius);padding:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--teal);margin-bottom:8px;letter-spacing:.3px">SHED DELIVERY WINDOW</div>
+      <div class="form-row3">
+        <div class="form-group">
+          <div class="form-label">Order date</div>
+          <input class="form-input" type="date" id="job-shed-order">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Due from</div>
+          <input class="form-input" type="date" id="job-shed-from">
+        </div>
+        <div class="form-group">
+          <div class="form-label">Due by</div>
+          <input class="form-input" type="date" id="job-shed-to">
+        </div>
+      </div>
+    </div>
+
+    <!-- SUPPLIER / PO (collapsed) -->
     <div>
       <button type="button" onclick="toggleSupplier()" style="background:none;border:0.5px solid var(--teal-border);border-radius:var(--radius);padding:7px 12px;font-size:12px;font-weight:600;color:var(--teal);cursor:pointer;font-family:var(--font);width:100%;text-align:left">
         <span id="supplier-toggle-label">+ Add supplier / PO collection (optional)</span>
@@ -216,43 +295,19 @@
         </div>
       </div>
     </div>
-    <!-- ITEMS -->
-    <div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div class="form-label">Order items</div>
-        <button class="btn btn-ghost btn-sm" onclick="addItemRow()">+ Add item</button>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 72px 104px 28px;gap:6px;margin-bottom:4px;padding:0 2px">
-        <span style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px">PRODUCT</span>
-        <span style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px">QTY</span>
-        <span style="font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px">LENGTH (mm)</span>
-        <span></span>
-      </div>
-      <div id="items-container"></div>
-      <div id="max-len-display" style="font-size:12px;color:var(--text2);margin-top:6px;min-height:18px"></div>
-    </div>
-    <!-- SHED DATES -->
-    <div id="shed-dates" style="display:none;background:var(--teal-bg);border:0.5px solid var(--teal-border);border-radius:var(--radius);padding:12px">
-      <div style="font-size:11px;font-weight:600;color:var(--teal);margin-bottom:8px;letter-spacing:.3px">SHED DELIVERY WINDOW</div>
-      <div class="form-row3">
-        <div class="form-group">
-          <div class="form-label">Order date</div>
-          <input class="form-input" type="date" id="job-shed-order">
-        </div>
-        <div class="form-group">
-          <div class="form-label">Due from</div>
-          <input class="form-input" type="date" id="job-shed-from">
-        </div>
-        <div class="form-group">
-          <div class="form-label">Due by</div>
-          <input class="form-input" type="date" id="job-shed-to">
-        </div>
-      </div>
-    </div>
+
+    <!-- NOTES -->
     <div class="form-group">
       <div class="form-label">Notes</div>
-      <textarea class="form-textarea" id="job-notes" rows="2" placeholder="Special instructions, access info..."></textarea>
+      <textarea class="form-textarea" id="job-notes" rows="2" placeholder="Special instructions, access info, site contact..."></textarea>
     </div>
+
+    <!-- SAVE CUSTOMER CHECKBOX -->
+    <div id="save-customer-row" style="display:flex;align-items:center;gap:8px;background:var(--bg);padding:8px 12px;border-radius:var(--radius)">
+      <input type="checkbox" id="save-customer" style="width:16px;height:16px;cursor:pointer">
+      <label for="save-customer" style="font-size:12px;color:var(--text2);cursor:pointer">Save customer details for future jobs</label>
+    </div>
+
     <div class="divider"></div>
     <div style="display:flex;gap:8px;justify-content:space-between">
       <button class="btn btn-danger btn-sm" id="delete-job-btn" style="display:none" onclick="deleteJob()">Delete job</button>
@@ -267,7 +322,7 @@
 
 <!-- ADVANCE STATUS MODAL -->
 <div id="modal-advance" class="modal-overlay" style="display:none" onclick="closeModal('modal-advance',event)">
-<div class="modal" style="max-width:440px" onclick="event.stopPropagation()">
+<div class="modal" style="max-width:460px" onclick="event.stopPropagation()">
   <div class="modal-header">
     <div class="modal-title" id="adv-title">Update status</div>
     <button class="modal-close" onclick="closeModal('modal-advance')">&times;</button>
@@ -296,6 +351,7 @@
         <div class="form-label">New run slot</div>
         <select class="form-select" id="move-slot">
           <option value="unassigned">Unassigned</option>
+          <option value="6am">⚡ 6am Drop</option>
           <option value="1st">1st Run</option>
           <option value="2nd">2nd Run</option>
           <option value="3rd">3rd Run</option>
@@ -317,7 +373,7 @@
 </div>
 </div>
 
-<!-- JOB DETAIL / AUDIT LOG MODAL -->
+<!-- JOB DETAIL MODAL -->
 <div id="modal-detail" class="modal-overlay" style="display:none" onclick="closeModal('modal-detail',event)">
 <div class="modal" onclick="event.stopPropagation()">
   <div class="modal-header">
@@ -351,71 +407,73 @@
 let allJobs = [];
 let filteredJobs = [];
 let itemRows = [];
+let addressTimeout = null;
+let customerTimeout = null;
 
 async function init() {
   const ok = await initApp(['super_admin','branch_manager','planner']);
   if (!ok) return;
   renderTopbar('jobs');
   document.getElementById('job-del-date').value = todayStr();
+  document.getElementById('job-ibt-date').value = (() => {
+    const d = new Date(); d.setDate(d.getDate()+1);
+    return d.toISOString().slice(0,10);
+  })();
   await loadJobs();
 }
 
 // ---- LOAD JOBS ----
 async function loadJobs() {
   document.getElementById('jobs-list').innerHTML = '<div class="loading-wrap"><div class="spinner spinner-lg"></div></div>';
-  const { data, error } = await sb
-    .from('jobs')
-    .select('*, job_items(*)')
+  const { data, error } = await sb.from('jobs')
+    .select(`*, job_items(*),
+      entered_by_staff:staff!jobs_entered_by_fkey(name),
+      picked_by_staff:staff!jobs_picked_by_fkey(name),
+      loaded_by_staff:staff!jobs_loaded_by_fkey(name)`)
     .order('created_at', { ascending: false });
-
-  if (error) {
-    document.getElementById('jobs-list').innerHTML = `<div class="alert alert-error">Could not load jobs: ${error.message}</div>`;
-    return;
-  }
-
+  if (error) { document.getElementById('jobs-list').innerHTML = `<div class="alert alert-error">Could not load jobs: ${error.message}</div>`; return; }
   allJobs = data || [];
   applyFilters();
 }
 
 // ---- FILTERS ----
 function applyFilters() {
-  const search = document.getElementById('f-search').value.toLowerCase().trim();
-  const status = document.getElementById('f-status').value;
-  const type   = document.getElementById('f-type').value;
-  const region = document.getElementById('f-region').value;
-  const date   = document.getElementById('f-date').value;
-  const slot   = document.getElementById('f-slot').value;
+  const search    = document.getElementById('f-search').value.toLowerCase().trim();
+  const status    = document.getElementById('f-status').value;
+  const type      = document.getElementById('f-type').value;
+  const date      = document.getElementById('f-date').value;
+  const slot      = document.getElementById('f-slot').value;
+  const readiness = document.getElementById('f-readiness').value;
 
   filteredJobs = allJobs.filter(j => {
-    if (status && j.status !== status) return false;
-    if (type && j.type !== type) return false;
-    if (region && j.region !== region) return false;
-    if (date && j.delivery_date !== date) return false;
-    if (slot && j.run_slot !== slot) return false;
+    if (status    && j.status    !== status)    return false;
+    if (type      && j.type      !== type)      return false;
+    if (date      && j.delivery_date !== date)  return false;
+    if (slot      && j.run_slot  !== slot)      return false;
+    if (readiness && j.readiness !== readiness) return false;
     if (search) {
-      const hay = `${j.invoice_number} ${j.customer_name} ${j.suburb_raw} ${j.postcode} ${j.po_number || ''}`.toLowerCase();
+      const hay = `${j.invoice_number} ${j.customer_name} ${j.suburb_raw} ${j.postcode} ${j.po_number||''}`.toLowerCase();
       if (!hay.includes(search)) return false;
     }
     return true;
   });
 
-  // Sort: priority first, recovery second, then by date
   filteredJobs.sort((a, b) => {
+    if (a.is_6am_drop && !b.is_6am_drop) return -1;
+    if (!a.is_6am_drop && b.is_6am_drop) return 1;
     const order = { priority:0, recovery:1, shed:2, standard:3 };
-    const typeDiff = (order[a.type]||3) - (order[b.type]||3);
-    if (typeDiff !== 0) return typeDiff;
+    const td = (order[a.type]||3) - (order[b.type]||3);
+    if (td !== 0) return td;
     return (a.delivery_date||'') < (b.delivery_date||'') ? -1 : 1;
   });
 
-  document.getElementById('jobs-sub').textContent =
-    `${filteredJobs.length} of ${allJobs.length} jobs`;
-
+  document.getElementById('jobs-sub').textContent = `${filteredJobs.length} of ${allJobs.length} jobs`;
   renderJobsList();
 }
 
 function clearFilters() {
   ['f-search','f-date'].forEach(id => document.getElementById(id).value = '');
-  ['f-status','f-type','f-region','f-slot'].forEach(id => document.getElementById(id).value = '');
+  ['f-status','f-type','f-slot','f-readiness'].forEach(id => document.getElementById(id).value = '');
   applyFilters();
 }
 
@@ -423,11 +481,7 @@ function clearFilters() {
 function renderJobsList() {
   const el = document.getElementById('jobs-list');
   if (!filteredJobs.length) {
-    el.innerHTML = `<div class="empty-state">
-      <div class="empty-state-icon">📋</div>
-      <div class="empty-state-title">No jobs found</div>
-      <div class="empty-state-desc">Try adjusting your filters or create a new job.</div>
-    </div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">No jobs found</div><div class="empty-state-desc">Try adjusting filters or create a new job.</div></div>`;
     return;
   }
   el.innerHTML = filteredJobs.map(j => jobCardHTML(j)).join('');
@@ -437,52 +491,56 @@ function jobCardHTML(j) {
   const items = j.job_items || [];
   const maxLen = j.max_item_length_mm || 0;
   const typeCls = j.type !== 'standard' ? j.type : '';
-  const enteredBy = j.entered_by_name || '';
+  const s = JOB_STATUSES[j.status] || { label:j.status, color:'#a3a4a4', bg:'#f0f4f8' };
 
   return `
-  <div class="job-card ${typeCls} ${j.locked ? 'locked-card' : ''}">
-    <div class="job-card-header">
+  <div class="job-card ${typeCls} ${j.locked?'locked-card':''} ${j.is_6am_drop?'is-6am':''}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
       <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span class="invoice-num">${j.invoice_number}</span>
           ${typeTag(j.type)}
-          ${j.run_slot && j.run_slot !== 'unassigned' ? `<span style="font-size:10px;color:var(--text3);font-weight:500">${j.run_slot} run</span>` : ''}
-          ${j.locked ? '<span style="font-size:10px;color:var(--green);font-weight:700">🔒 LOCKED</span>' : ''}
+          ${j.is_6am_drop?'<span style="background:#fef2f2;color:#dc2626;border:0.5px solid #fca5a5;border-radius:20px;font-size:10px;font-weight:700;padding:2px 8px">⚡ 6am DROP</span>':''}
+          ${j.run_slot&&j.run_slot!=='unassigned'?`<span style="font-size:10px;color:var(--text3);font-weight:500">${RUN_SLOT_LABELS[j.run_slot]||j.run_slot}</span>`:''}
+          ${j.locked?'<span style="font-size:10px;color:var(--green);font-weight:700">🔒 LOCKED</span>':''}
         </div>
         <div style="font-size:15px;font-weight:600;color:var(--text);margin-top:3px">${j.customer_name}</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:2px">${j.suburb_raw || ''}${j.address_raw ? ' — ' + j.address_raw : ''}</div>
-        ${j.customer_phone ? `<div style="margin-top:5px">${phoneLink(j.customer_phone)}</div>` : ''}
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">
+          ${j.suburb_raw||''}${j.address_raw?' — '+j.address_raw:''}
+        </div>
+        ${j.customer_phone?`<div style="margin-top:4px">${phoneLink(j.customer_phone)}</div>`:''}
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
-        ${statusPill(j.status)}
-        ${j.delivery_date ? `<span style="font-size:11px;color:var(--text3)">${fmtDate(j.delivery_date)}</span>` : ''}
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+        <span class="status-pill" style="background:${s.bg};color:${s.color}">${s.label}</span>
+        ${j.delivery_date?`<span style="font-size:11px;color:var(--text3)">${fmtDate(j.delivery_date)}</span>`:''}
         ${mapsLink(j.address_raw, j.suburb_raw, j.postcode)}
       </div>
     </div>
 
-    ${items.length ? `
-    <div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.7">
-      ${items.map(i => `<span style="margin-right:12px"><strong style="color:var(--text);font-family:var(--mono)">${i.quantity}×${fmtLen(i.length_mm)}</strong> ${i.product_name}</span>`).join('')}
-    </div>` : ''}
+    ${readinessPill(j.readiness)}
+    ${j.readiness==='needs_ibt'&&j.ibt_branch?`<div class="ibt-badge" style="margin-top:4px">🔄 IBT from ${j.ibt_branch}${j.ibt_expected_date?' · Due '+fmtDate(j.ibt_expected_date):''}</div>`:''}
 
-    ${maxLen > 6000 ? `<div style="margin-top:6px"><span class="tag tag-warn">⚠ 9m truck required</span></div>` : ''}
-    ${j.po_number ? `<div style="margin-top:6px"><span class="tag tag-po">PO: ${j.po_number}</span>${j.supplier_name ? ' <span style="font-size:11px;color:var(--text2)">'+j.supplier_name+'</span>' : ''}</div>` : ''}
-    ${j.notes ? `<div style="font-size:11px;color:var(--text3);margin-top:6px;font-style:italic">📝 ${j.notes}</div>` : ''}
+    ${items.length?`<div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.7">
+      ${items.map(i=>`<span style="margin-right:10px"><strong style="color:var(--text);font-family:var(--mono)">${i.quantity}×${fmtLen(i.length_mm)}</strong> ${i.product_name}</span>`).join('')}
+    </div>`:''}
+
+    ${maxLen>6000?`<div style="margin-top:5px"><span class="tag tag-warn">⚠ 9m truck required</span></div>`:''}
+    ${j.po_number?`<div style="margin-top:5px"><span class="tag tag-po">PO: ${j.po_number}</span>${j.supplier_name?' <span style="font-size:11px;color:var(--text2)">'+j.supplier_name+'</span>':''}</div>`:''}
+    ${j.yard_location?`<div style="font-size:11px;color:var(--teal);margin-top:4px;font-weight:500">📍 Location: ${j.yard_location}</div>`:''}
+    ${j.notes?`<div style="font-size:11px;color:var(--text3);margin-top:5px;font-style:italic">📝 ${j.notes}</div>`:''}
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:6px">
       <div style="font-size:10px;color:var(--text3)">
-        ${j.entered_by ? `Entered by ${j.entered_by_name || 'staff'}` : ''}
-        ${j.picked_by ? ` · Picked: ${j.picked_by_name || '✓'}` : ''}
-        ${j.loaded_by ? ` · Loaded: ${j.loaded_by_name || '✓'}` : ''}
+        ${j.entered_by?`By ${j.entered_by_staff?.name||'staff'}`:''}
+        ${j.picked_by?` · Picked: ${j.picked_by_staff?.name||'✓'}`:''}
+        ${j.loaded_by?` · Loaded: ${j.loaded_by_staff?.name||'✓'}`:''}
       </div>
-      <div class="job-card-actions" style="margin-top:0">
-        ${!j.locked ? `
-          ${j.status !== 'delivered' ? `<button class="btn btn-primary btn-sm" onclick="openAdvanceModal('${j.id}')">→ ${JOB_STATUSES[STATUS_NEXT[j.status]]?.label || ''}</button>` : ''}
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        ${!j.locked?`
+          ${j.status!=='delivered'?`<button class="btn btn-primary btn-sm" onclick="openAdvanceModal('${j.id}')">→ ${JOB_STATUSES[STATUS_NEXT[j.status]]?.label||''}</button>`:''}
           <button class="btn btn-ghost btn-sm" onclick="openEditJob('${j.id}')">Edit</button>
-          <button class="btn btn-amber btn-sm" onclick="openMoveModal('${j.id}')">Move date</button>
-        ` : `
-          ${canReopenJobs() ? `<button class="btn btn-ghost btn-sm" onclick="reopenJob('${j.id}')">🔓 Reopen</button>` : ''}
-        `}
+          <button class="btn btn-amber btn-sm" onclick="openMoveModal('${j.id}')">Move</button>
+        `:`${canReopenJobs()?`<button class="btn btn-ghost btn-sm" onclick="reopenJob('${j.id}')">🔓 Reopen</button>`:''}`}
         <button class="btn btn-ghost btn-sm" onclick="openDetailModal('${j.id}')">📋 Log</button>
         <button class="btn btn-ghost btn-sm" onclick="openLabelModal('${j.id}')">🏷 Label</button>
       </div>
@@ -490,255 +548,124 @@ function jobCardHTML(j) {
   </div>`;
 }
 
-// ---- ADVANCE STATUS ----
-async function openAdvanceModal(jobId) {
-  const j = allJobs.find(x => x.id === jobId);
-  if (!j) return;
-  const next = STATUS_NEXT[j.status];
-  if (!next) return;
-
-  document.getElementById('adv-job-id').value = jobId;
-  document.getElementById('adv-title').textContent = `${j.invoice_number} — ${j.customer_name}`;
-
-  let body = `
-    <div style="margin-bottom:14px;padding:10px 12px;background:var(--bg);border-radius:var(--radius);font-size:13px;color:var(--text2)">
-      Status: <strong>${JOB_STATUSES[j.status]?.label}</strong> → <strong style="color:var(--brand)">${JOB_STATUSES[next]?.label}</strong>
-    </div>`;
-
-  if (next === 'picked') {
-    body += `<div class="form-group" style="margin-bottom:14px">
-      <div class="form-label">Picked by</div>
-      <input class="form-input" id="adv-picker" placeholder="Name" value="${App.staff?.name || ''}">
-    </div>`;
-  }
-  if (next === 'loaded') {
-    body += `<div class="form-group" style="margin-bottom:14px">
-      <div class="form-label">Loaded by</div>
-      <input class="form-input" id="adv-loader" placeholder="Name" value="${App.staff?.name || ''}">
-    </div>`;
-  }
-  if (next === 'delivered') {
-    body += `<div class="alert alert-warn" style="margin-bottom:14px">
-      📸 A delivery photo is required on the driver's phone to mark as delivered. This will lock the job.
-    </div>`;
-  }
-
-  body += `<div class="divider"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="closeModal('modal-advance')">Cancel</button>
-      <button class="btn btn-primary" onclick="confirmAdvance('${jobId}','${next}')">Confirm</button>
-    </div>`;
-
-  document.getElementById('adv-body').innerHTML = body;
-  document.getElementById('modal-advance').style.display = 'flex';
+// ---- CUSTOMER AUTOCOMPLETE ----
+async function searchCustomers(val) {
+  clearTimeout(customerTimeout);
+  const dd = document.getElementById('customer-dropdown');
+  if (val.length < 2) { dd.style.display = 'none'; return; }
+  customerTimeout = setTimeout(async () => {
+    const { data } = await sb.from('customers')
+      .select('id,name,phone,address_raw,suburb,postcode,region')
+      .ilike('name', `%${val}%`)
+      .eq('branch_id', App.branchId)
+      .limit(6);
+    if (!data?.length) { dd.style.display = 'none'; return; }
+    dd.innerHTML = data.map(c => `
+      <div class="autocomplete-item" onclick="fillCustomer(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+        <div class="autocomplete-item-name">${c.name}</div>
+        <div class="autocomplete-item-sub">${c.phone||''}${c.suburb?' · '+c.suburb:''}</div>
+      </div>`).join('');
+    dd.style.display = 'block';
+  }, 250);
 }
 
-async function confirmAdvance(jobId, nextStatus) {
-  const updates = { status: nextStatus };
-  const pickerEl = document.getElementById('adv-picker');
-  const loaderEl = document.getElementById('adv-loader');
-  if (pickerEl) updates.picked_by = App.staffId;
-  if (loaderEl) updates.loaded_by = App.staffId;
-  if (nextStatus === 'delivered') updates.locked = true;
-
-  const { error } = await sb.from('jobs').update(updates).eq('id', jobId);
-  if (error) { showToast('Could not update: ' + error.message, 'error'); return; }
-
-  await sb.from('job_log').insert({
-    job_id: jobId,
-    action: `Status → ${JOB_STATUSES[nextStatus]?.label}`,
-    performed_by: App.staffId,
-    performed_by_name: App.staff?.name,
-  });
-
-  closeModal('modal-advance');
-  showToast(`Updated to ${JOB_STATUSES[nextStatus]?.label}`);
-  await loadJobs();
+function fillCustomer(c) {
+  document.getElementById('job-customer').value = c.name;
+  document.getElementById('job-phone').value = c.phone || '';
+  document.getElementById('job-address').value = c.address_raw || '';
+  document.getElementById('job-suburb').value = c.suburb || '';
+  document.getElementById('job-postcode').value = c.postcode || '';
+  if (c.region) document.getElementById('job-region').value = c.region;
+  document.getElementById('customer-dropdown').style.display = 'none';
+  document.getElementById('save-customer').checked = false;
 }
 
-// ---- REOPEN JOB ----
-async function reopenJob(jobId) {
-  const j = allJobs.find(x => x.id === jobId);
-  if (!j) return;
-  if (!confirm(`Reopen ${j.invoice_number} — ${j.customer_name}? The branch manager will be notified.`)) return;
-
-  const { error } = await sb.from('jobs')
-    .update({ locked: false, status: 'arrived' })
-    .eq('id', jobId);
-  if (error) { showToast('Could not reopen job', 'error'); return; }
-
-  await sb.from('job_log').insert({
-    job_id: jobId,
-    action: 'Job reopened — reset to Arrived',
-    performed_by: App.staffId,
-    performed_by_name: App.staff?.name,
-  });
-
-  // Notify branch manager
-  await sb.from('notifications').insert({
-    branch_id: App.branchId,
-    type: 'job_reopened',
-    title: `Job reopened: ${j.invoice_number}`,
-    message: `${j.invoice_number} — ${j.customer_name} was reopened by ${App.staff?.name}`,
-  });
-
-  showToast('Job reopened');
-  await loadJobs();
-}
-
-// ---- MOVE DATE ----
-function openMoveModal(jobId) {
-  const j = allJobs.find(x => x.id === jobId);
-  if (!j) return;
-  document.getElementById('move-job-id').value = jobId;
-  document.getElementById('move-date').value = j.delivery_date || todayStr();
-  document.getElementById('move-slot').value = j.run_slot || 'unassigned';
-  document.getElementById('move-reason').value = '';
-  document.getElementById('move-job-info').innerHTML =
-    `<strong>${j.customer_name}</strong> — ${j.invoice_number}<br>
-     Current: ${fmtDate(j.delivery_date || '')} · ${j.run_slot || 'unassigned'} run`;
-  document.getElementById('modal-move').style.display = 'flex';
-}
-
-async function confirmMove() {
-  const jobId = document.getElementById('move-job-id').value;
-  const newDate = document.getElementById('move-date').value;
-  const newSlot = document.getElementById('move-slot').value;
-  const reason = document.getElementById('move-reason').value.trim();
-  const j = allJobs.find(x => x.id === jobId);
-
-  const { error } = await sb.from('jobs')
-    .update({ delivery_date: newDate, run_slot: newSlot })
-    .eq('id', jobId);
-  if (error) { showToast('Could not move job', 'error'); return; }
-
-  await sb.from('job_log').insert({
-    job_id: jobId,
-    action: `Moved: ${fmtDate(j?.delivery_date)} ${j?.run_slot || ''} → ${fmtDate(newDate)} ${newSlot}${reason ? ' (' + reason + ')' : ''}`,
-    performed_by: App.staffId,
-    performed_by_name: App.staff?.name,
-  });
-
-  closeModal('modal-move');
-  showToast('Delivery date updated');
-  await loadJobs();
-}
-
-// ---- DETAIL / AUDIT LOG ----
-async function openDetailModal(jobId) {
-  const j = allJobs.find(x => x.id === jobId);
-  if (!j) return;
-
-  document.getElementById('detail-title').textContent = `${j.invoice_number} — ${j.customer_name}`;
-  document.getElementById('modal-detail').style.display = 'flex';
-  document.getElementById('detail-body').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
-
-  const { data: log } = await sb.from('job_log')
-    .select('*')
-    .eq('job_id', jobId)
-    .order('created_at', { ascending: false });
-
-  const items = j.job_items || [];
-  document.getElementById('detail-body').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-      <div><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">STATUS</div>${statusPill(j.status)}</div>
-      <div><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">TYPE</div>${typeTag(j.type) || '<span style="font-size:12px;color:var(--text2)">Standard</span>'}</div>
-      <div><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">CUSTOMER</div><div style="font-size:13px;font-weight:500">${j.customer_name}</div></div>
-      <div><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">PHONE</div><div style="font-size:13px">${j.customer_phone ? phoneLink(j.customer_phone) : '—'}</div></div>
-      <div style="grid-column:span 2"><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">ADDRESS</div><div style="font-size:13px;color:var(--text2)">${j.address_raw || '—'}</div></div>
-      <div><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">DELIVERY DATE</div><div style="font-size:13px">${fmtDate(j.delivery_date || '')}</div></div>
-      <div><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">RUN SLOT</div><div style="font-size:13px">${j.run_slot || 'Unassigned'}</div></div>
-    </div>
-
-    ${items.length ? `
-    <div style="margin-bottom:16px">
-      <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:8px">ORDER ITEMS</div>
-      ${items.map(i => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:13px">
-        <span>${i.product_name}</span>
-        <span style="font-family:var(--mono);font-weight:600;color:var(--brand)">${i.quantity} × ${fmtLen(i.length_mm)}</span>
-      </div>`).join('')}
-    </div>` : ''}
-
-    ${j.po_number ? `
-    <div style="margin-bottom:16px;padding:10px 12px;background:var(--teal-bg);border-radius:var(--radius);border:0.5px solid var(--teal-border)">
-      <div style="font-size:11px;font-weight:600;color:var(--teal)">PO: ${j.po_number} — ${j.supplier_name || ''}</div>
-      ${j.supplier_address ? `<div style="font-size:11px;color:var(--teal);opacity:.8;margin-top:2px">${j.supplier_address}</div>` : ''}
-    </div>` : ''}
-
-    <div>
-      <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:8px">AUDIT LOG</div>
-      ${!log || !log.length ? '<div style="font-size:13px;color:var(--text3)">No log entries yet.</div>' :
-        log.map(l => `<div class="log-entry">
-          <div class="log-dot"></div>
-          <div style="flex:1">
-            <div style="font-size:13px;color:var(--text)">${l.action}</div>
-            ${l.notes ? `<div style="font-size:11px;color:var(--text3)">${l.notes}</div>` : ''}
-            <div style="font-size:10px;color:var(--text3);margin-top:2px;font-family:var(--mono)">${fmtDateTime(l.created_at)}${l.performed_by_name ? ' · ' + l.performed_by_name : ''}</div>
-          </div>
-        </div>`).join('')}
-    </div>`;
-}
-
-// ---- QR LABEL ----
-async function openLabelModal(jobId) {
-  const j = allJobs.find(x => x.id === jobId);
-  if (!j) return;
-
-  document.getElementById('modal-label').style.display = 'flex';
-  const items = j.job_items || [];
-  const fullAddr = [j.address_raw, j.suburb_raw, j.postcode].filter(Boolean).join(', ');
-  const qrData = `${window.location.origin}/no1-delivery/job.html?id=${j.id}`;
-
-  document.getElementById('label-body').innerHTML = `
-    <div class="qr-label" id="print-label">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-        <div>
-          <div style="font-size:9px;font-weight:700;color:#00479f;letter-spacing:.5px;margin-bottom:3px">NO.1 DELIVERY — PRESTONS</div>
-          <div class="qr-label-invoice">${j.invoice_number}</div>
-          <div class="qr-label-customer">${j.customer_name}</div>
-          ${j.customer_phone ? `<div style="font-size:11px;color:#565656">📞 ${j.customer_phone}</div>` : ''}
-        </div>
-        <div id="qr-canvas" style="display:flex;justify-content:center;margin:0 auto 8px"></div>
-      </div>
-      <div class="qr-label-address">${j.address_raw || ''}${j.suburb_raw ? ', ' + j.suburb_raw : ''}${j.postcode ? ' ' + j.postcode : ''}</div>
-      <div class="qr-label-items">${items.map(i => `${i.quantity} × ${fmtLen(i.length_mm)} ${i.product_name}`).join('<br>')}</div>
-      ${j.max_item_length_mm > 6000 ? `<div style="font-size:10px;font-weight:700;color:#b91c1c;margin-bottom:4px">⚠ 9M TRUCK REQUIRED</div>` : ''}
-      ${j.po_number ? `<div style="font-size:10px;font-weight:700;color:#0e7490">PO: ${j.po_number}</div>` : ''}
-      ${j.delivery_date ? `<div style="font-size:10px;color:#565656;margin-top:4px">Delivery: ${fmtDate(j.delivery_date)}${j.run_slot && j.run_slot !== 'unassigned' ? ' — ' + j.run_slot + ' run' : ''}</div>` : ''}
-      <div style="font-size:9px;color:#a3a4a4;margin-top:6px;text-align:center">Scan QR to view job details</div>
-    </div>`;
-
-  // Generate QR code
-  setTimeout(() => {
-    const canvas = document.getElementById('qr-canvas');
-    const el = document.getElementById('qr-canvas');
-    if (el && typeof QRCode !== 'undefined') {
-      el.innerHTML = '';
-      new QRCode(el, {
-        text: qrData,
-        width: 72,
-        height: 72,
-        colorDark: '#00479f',
-        colorLight: '#ffffff',
-      });
+// ---- GNAF ADDRESS AUTOCOMPLETE ----
+async function searchAddress(val) {
+  clearTimeout(addressTimeout);
+  const dd = document.getElementById('address-dropdown');
+  if (val.length < 4) { dd.style.display = 'none'; return; }
+  addressTimeout = setTimeout(async () => {
+    try {
+      const url = `https://api.addressify.com.au/addresspro/autocomplete?term=${encodeURIComponent(val)}&api_key=autocomplete&max_results=6&state=NSW`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data?.length) { dd.style.display = 'none'; return; }
+      dd.innerHTML = data.map(addr => `
+        <div class="addr-suggestion" onclick="fillAddress('${addr.replace(/'/g,"\\'")}')">
+          ${addr}
+        </div>`).join('');
+      dd.style.display = 'block';
+    } catch(e) {
+      dd.style.display = 'none';
     }
-  }, 100);
+  }, 350);
 }
 
-// ---- JOB FORM ----
+function fillAddress(addr) {
+  document.getElementById('job-address').value = addr;
+  document.getElementById('address-dropdown').style.display = 'none';
+  // Parse suburb and postcode from address string
+  // Format is usually "123 Street, Suburb NSW 2750"
+  const match = addr.match(/,\s*([^,]+)\s+NSW\s+(\d{4})/i);
+  if (match) {
+    const suburb = match[1].trim();
+    const postcode = match[2];
+    if (!document.getElementById('job-suburb').value) {
+      document.getElementById('job-suburb').value = suburb;
+    }
+    if (!document.getElementById('job-postcode').value) {
+      document.getElementById('job-postcode').value = postcode;
+      lookupPostcode(postcode);
+    }
+  }
+}
+
+// Postcode lookup
+const PC = {'2000':'Sydney','2010':'Surry Hills','2020':'Mascot','2026':'Bondi','2031':'Randwick','2042':'Newtown','2060':'North Sydney','2065':'St Leonards','2067':'Chatswood','2072':'Pymble','2076':'Hornsby','2085':'Mosman','2093':'Manly','2099':'Dee Why','2110':'Ryde','2114':'Eastwood','2118':'Carlingford','2121':'Epping','2125':'West Pennant Hills','2130':'Summer Hill','2132':'Burwood','2134':'Strathfield','2137':'Concord','2140':'Homebush','2142':'Granville','2145':'Westmead','2148':'Blacktown','2150':'Parramatta','2154':'Castle Hill','2155':'Rouse Hill','2160':'Merrylands','2161':'Guildford','2165':'Fairfield','2168':'Miller','2170':'Liverpool','2171':'Casula','2172':'Moorebank','2175':'Horningsea Park','2176':'Wetherill Park','2177':'Bossley Park','2190':'Greenacre','2195':'Lakemba','2199':'Bankstown','2200':'Bankstown','2204':'Marrickville','2207':'Bexley','2208':'Kingsgrove','2210':'Lugarno','2216':'Rockdale','2220':'Hurstville','2227':'Miranda','2230':'Cronulla','2232':'Sutherland','2250':'Gosford','2257':'Terrigal','2259':'Tuggerah','2300':'Newcastle','2320':'Maitland','2325':'Cessnock','2330':'Singleton','2340':'Tamworth','2350':'Armidale','2460':'Grafton','2470':'Lismore','2480':'Byron Bay','2500':'Wollongong','2560':'Campbelltown','2563':'Camden','2565':'Leumeah','2567':'Narellan','2570':'Camden','2580':'Goulburn','2745':'Penrith','2747':'St Marys','2750':'Penrith','2753':'Richmond','2754':'Windsor','2760':'Kingswood','2765':'Riverstone','2770':'Mount Druitt','2780':'Katoomba','2795':'Bathurst','2800':'Orange','2830':'Dubbo','2850':'Mudgee','2880':'Broken Hill','2600':'Canberra','2601':'Braddon','2605':'Curtin','2612':'Turner','2620':'Queanbeyan'};
+
+function lookupPostcode(postcode) {
+  if (postcode.length !== 4) return;
+  const suburb = PC[postcode];
+  if (suburb && !document.getElementById('job-suburb').value) {
+    document.getElementById('job-suburb').value = suburb;
+  }
+  // Set region based on postcode
+  const pc = parseInt(postcode);
+  const regionEl = document.getElementById('job-region');
+  if (pc >= 2600 && pc <= 2620) regionEl.value = 'act';
+  else if (pc >= 2640 || pc <= 1999 || (pc >= 2250 && pc <= 2599)) regionEl.value = 'regional-nsw';
+  else regionEl.value = 'sydney-metro';
+}
+
+// ---- TOGGLE HELPERS ----
+function toggleSupplier() {
+  const sec = document.getElementById('supplier-section');
+  const lbl = document.getElementById('supplier-toggle-label');
+  const isHidden = sec.style.display === 'none';
+  sec.style.display = isHidden ? 'block' : 'none';
+  lbl.textContent = isHidden ? '− Hide supplier / PO section' : '+ Add supplier / PO collection (optional)';
+}
+
+function toggleIBTFields() {
+  const readiness = document.getElementById('job-readiness').value;
+  document.getElementById('ibt-fields').style.display = readiness === 'needs_ibt' ? 'block' : 'none';
+}
+
 function toggleShedDates() {
-  const type = document.getElementById('job-type').value;
-  document.getElementById('shed-dates').style.display = type === 'shed' ? 'block' : 'none';
+  document.getElementById('shed-dates').style.display =
+    document.getElementById('job-type').value === 'shed' ? 'block' : 'none';
 }
 
-function addItemRow(prod = '', qty = 1, len = '') {
-  const id = 'ir' + Date.now() + Math.random().toString(36).slice(2, 5);
+// ---- ITEMS ----
+function addItemRow(prod='', qty=1, len='') {
+  const id = 'ir' + Date.now() + Math.random().toString(36).slice(2,5);
   itemRows.push(id);
   const d = document.createElement('div');
   d.id = id;
-  d.className = 'item-row-grid';
+  d.style.cssText = 'display:grid;grid-template-columns:1fr 72px 110px 28px;gap:6px;margin-bottom:6px;align-items:center';
   d.innerHTML = `
-    <input class="form-input" placeholder="e.g. Colorbond sheet" value="${prod}" style="padding:7px 10px;font-size:13px" oninput="updateMaxLen()">
+    <input class="form-input" placeholder="Product / description" value="${prod}" style="padding:7px 10px;font-size:13px" oninput="updateMaxLen()">
     <input class="form-input" type="number" min="1" value="${qty}" style="padding:7px 8px;font-size:13px;text-align:center" oninput="updateMaxLen()">
     <input class="form-input mono" type="number" min="0" value="${len}" placeholder="e.g. 7800" style="padding:7px 8px;font-size:13px;font-weight:600" oninput="updateMaxLen()">
     <button onclick="removeItem('${id}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:0;line-height:1">×</button>`;
@@ -757,26 +684,27 @@ function getItems() {
     const row = document.getElementById(id);
     if (!row) return null;
     const inputs = row.querySelectorAll('input');
-    return { product_name: inputs[0].value.trim(), quantity: parseInt(inputs[1].value) || 1, length_mm: parseInt(inputs[2].value) || 0 };
+    return { product_name:inputs[0].value.trim(), quantity:parseInt(inputs[1].value)||1, length_mm:parseInt(inputs[2].value)||0 };
   }).filter(Boolean).filter(i => i.product_name);
 }
 
 function updateMaxLen() {
   const items = getItems();
-  const max = items.reduce((m, i) => Math.max(m, i.length_mm), 0);
+  const max = items.reduce((m,i) => Math.max(m,i.length_mm), 0);
   const el = document.getElementById('max-len-display');
   if (!items.length) { el.innerHTML = ''; return; }
-  el.innerHTML = `Max: <strong style="color:${max > 6000 ? 'var(--amber)' : 'var(--green)'}">${fmtLen(max)}</strong>${max > 6000 ? ' <span class="tag tag-warn" style="font-size:10px">9m truck</span>' : ''}`;
+  el.innerHTML = `Max: <strong style="color:${max>6000?'var(--amber)':'var(--green)'}">${fmtLen(max)}</strong>${max>6000?' <span class="tag tag-warn" style="font-size:10px">9m truck</span>':''}`;
 }
 
+// ---- OPEN NEW / EDIT JOB ----
 function openNewJobModal() {
   itemRows = [];
   document.getElementById('job-id').value = '';
   document.getElementById('modal-job-title').textContent = 'New Job';
   document.getElementById('delete-job-btn').style.display = 'none';
-  ['job-invoice','job-customer','job-phone','job-email','job-address',
-   'job-suburb','job-postcode','job-po','job-supplier','job-supplier-addr',
-   'job-notes','job-shed-order','job-shed-from','job-shed-to'].forEach(id => {
+  ['job-invoice','job-customer','job-phone','job-address','job-suburb','job-postcode',
+   'job-po','job-supplier','job-supplier-addr','job-notes',
+   'job-ibt-branch','job-shed-order','job-shed-from','job-shed-to'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -784,101 +712,146 @@ function openNewJobModal() {
   document.getElementById('job-region').value = 'sydney-metro';
   document.getElementById('job-del-date').value = todayStr();
   document.getElementById('job-run-slot').value = 'unassigned';
+  document.getElementById('job-readiness').value = 'in_stock';
   document.getElementById('items-container').innerHTML = '';
   document.getElementById('max-len-display').innerHTML = '';
   document.getElementById('shed-dates').style.display = 'none';
+  document.getElementById('ibt-fields').style.display = 'none';
+  document.getElementById('supplier-section').style.display = 'none';
+  document.getElementById('supplier-toggle-label').textContent = '+ Add supplier / PO collection (optional)';
+  document.getElementById('save-customer').checked = true;
+  document.getElementById('customer-dropdown').style.display = 'none';
+  document.getElementById('address-dropdown').style.display = 'none';
   addItemRow();
   document.getElementById('modal-job').style.display = 'flex';
   setTimeout(() => document.getElementById('job-invoice')?.focus(), 100);
 }
 
 async function openEditJob(jobId) {
-  const { data: j } = await sb.from('jobs')
-    .select('*, job_items(*)')
-    .eq('id', jobId)
-    .single();
+  const { data:j } = await sb.from('jobs').select('*,job_items(*)').eq('id',jobId).single();
   if (!j) return;
-
   itemRows = [];
   document.getElementById('items-container').innerHTML = '';
   document.getElementById('job-id').value = j.id;
   document.getElementById('modal-job-title').textContent = 'Edit Job';
-  document.getElementById('delete-job-btn').style.display = canEditJobs() ? 'block' : 'none';
-  document.getElementById('job-invoice').value = j.invoice_number || '';
-  document.getElementById('job-type').value = j.type || 'standard';
-  document.getElementById('job-customer').value = j.customer_name || '';
-  document.getElementById('job-phone').value = j.customer_phone || '';
-  document.getElementById('job-email').value = j.customer_email || '';
-  document.getElementById('job-address').value = j.address_raw || '';
-  document.getElementById('job-suburb').value = j.suburb_raw || '';
-  document.getElementById('job-postcode').value = j.postcode || '';
-  document.getElementById('job-region').value = j.region || 'sydney-metro';
-  document.getElementById('job-del-date').value = j.delivery_date || '';
-  document.getElementById('job-run-slot').value = j.run_slot || 'unassigned';
-  document.getElementById('job-po').value = j.po_number || '';
-  document.getElementById('job-supplier').value = j.supplier_name || '';
-  document.getElementById('job-supplier-addr').value = j.supplier_address || '';
-  document.getElementById('job-notes').value = j.notes || '';
-  document.getElementById('job-shed-order').value = j.shed_order_date || '';
-  document.getElementById('job-shed-from').value = j.shed_due_from || '';
-  document.getElementById('job-shed-to').value = j.shed_due_to || '';
-  document.getElementById('shed-dates').style.display = j.type === 'shed' ? 'block' : 'none';
-  (j.job_items || []).forEach(i => addItemRow(i.product_name, i.quantity, i.length_mm));
+  document.getElementById('delete-job-btn').style.display = canEditJobs()?'block':'none';
+  document.getElementById('job-invoice').value = j.invoice_number||'';
+  document.getElementById('job-type').value = j.type||'standard';
+  document.getElementById('job-customer').value = j.customer_name||'';
+  document.getElementById('job-phone').value = j.customer_phone||'';
+  document.getElementById('job-address').value = j.address_raw||'';
+  document.getElementById('job-suburb').value = j.suburb_raw||'';
+  document.getElementById('job-postcode').value = j.postcode||'';
+  document.getElementById('job-region').value = j.region||'sydney-metro';
+  document.getElementById('job-del-date').value = j.delivery_date||'';
+  document.getElementById('job-run-slot').value = j.run_slot||'unassigned';
+  document.getElementById('job-readiness').value = j.readiness||'in_stock';
+  document.getElementById('job-ibt-branch').value = j.ibt_branch||'';
+  document.getElementById('job-po').value = j.po_number||'';
+  document.getElementById('job-supplier').value = j.supplier_name||'';
+  document.getElementById('job-supplier-addr').value = j.supplier_address||'';
+  document.getElementById('job-notes').value = j.notes||'';
+  document.getElementById('job-shed-order').value = j.shed_order_date||'';
+  document.getElementById('job-shed-from').value = j.shed_due_from||'';
+  document.getElementById('job-shed-to').value = j.shed_due_to||'';
+  document.getElementById('shed-dates').style.display = j.type==='shed'?'block':'none';
+  document.getElementById('ibt-fields').style.display = j.readiness==='needs_ibt'?'block':'none';
+  document.getElementById('supplier-section').style.display = j.po_number?'block':'none';
+  document.getElementById('supplier-toggle-label').textContent = j.po_number?'− Hide supplier / PO section':'+ Add supplier / PO collection (optional)';
+  document.getElementById('save-customer').checked = false;
+  document.getElementById('customer-dropdown').style.display = 'none';
+  document.getElementById('address-dropdown').style.display = 'none';
+  (j.job_items||[]).forEach(i => addItemRow(i.product_name, i.quantity, i.length_mm));
   document.getElementById('modal-job').style.display = 'flex';
 }
 
+// ---- SAVE JOB ----
 async function saveJob() {
   const id = document.getElementById('job-id').value;
   const items = getItems();
   const invoice = document.getElementById('job-invoice').value.trim();
   const customer = document.getElementById('job-customer').value.trim();
-  if (!invoice) { showToast('Invoice number required', 'error'); return; }
-  if (!customer) { showToast('Customer name required', 'error'); return; }
-  if (!items.length) { showToast('Add at least one item', 'error'); return; }
+  const readiness = document.getElementById('job-readiness').value;
+
+  if (!invoice)  { showToast('Invoice number required','error'); return; }
+  if (!customer) { showToast('Customer name required','error'); return; }
+  if (!items.length) { showToast('Add at least one item','error'); return; }
 
   const btn = document.getElementById('save-job-btn');
   btn.disabled = true; btn.textContent = 'Saving...';
 
-  const maxLen = items.reduce((m, i) => Math.max(m, i.length_mm), 0);
+  const maxLen = items.reduce((m,i) => Math.max(m,i.length_mm), 0);
+  const runSlot = document.getElementById('job-run-slot').value;
+  const is6am = runSlot === '6am';
+
   const jobData = {
     branch_id:          App.branchId,
     invoice_number:     invoice,
     type:               document.getElementById('job-type').value,
     customer_name:      customer,
-    customer_phone:     document.getElementById('job-phone').value.trim() || null,
-    customer_email:     document.getElementById('job-email').value.trim() || null,
-    address_raw:        document.getElementById('job-address').value.trim() || null,
-    suburb_raw:         document.getElementById('job-suburb').value.trim() || null,
-    postcode:           document.getElementById('job-postcode').value.trim() || null,
+    customer_phone:     document.getElementById('job-phone').value.trim()||null,
+    address_raw:        document.getElementById('job-address').value.trim()||null,
+    suburb_raw:         document.getElementById('job-suburb').value.trim()||null,
+    postcode:           document.getElementById('job-postcode').value.trim()||null,
     region:             document.getElementById('job-region').value,
-    delivery_date:      document.getElementById('job-del-date').value || null,
-    run_slot:           document.getElementById('job-run-slot').value,
-    po_number:          document.getElementById('job-po').value.trim() || null,
-    supplier_name:      document.getElementById('job-supplier').value.trim() || null,
-    supplier_address:   document.getElementById('job-supplier-addr').value.trim() || null,
-    notes:              document.getElementById('job-notes').value.trim() || null,
-    shed_order_date:    document.getElementById('job-shed-order').value || null,
-    shed_due_from:      document.getElementById('job-shed-from').value || null,
-    shed_due_to:        document.getElementById('job-shed-to').value || null,
+    delivery_date:      document.getElementById('job-del-date').value||null,
+    run_slot:           runSlot,
+    readiness,
+    ibt_branch:         document.getElementById('job-ibt-branch').value.trim()||null,
+    ibt_expected_date:  document.getElementById('job-ibt-date')?.value||null,
+    po_number:          document.getElementById('job-po').value.trim()||null,
+    supplier_name:      document.getElementById('job-supplier').value.trim()||null,
+    supplier_address:   document.getElementById('job-supplier-addr').value.trim()||null,
+    notes:              document.getElementById('job-notes').value.trim()||null,
+    shed_order_date:    document.getElementById('job-shed-order').value||null,
+    shed_due_from:      document.getElementById('job-shed-from').value||null,
+    shed_due_to:        document.getElementById('job-shed-to').value||null,
     max_item_length_mm: maxLen,
+    is_6am_drop:        is6am,
     entered_by:         App.staffId,
+    // Set initial status based on readiness
+    status: readiness === 'in_stock' ? 'unpicked' :
+            readiness === 'needs_ibt' ? 'waiting_ibt' :
+            readiness === 'needs_supplier' ? 'waiting_supplier' :
+            readiness === 'needs_fabrication' ? 'waiting_fabrication' :
+            'unpicked',
   };
 
   let jobId = id;
   if (id) {
     const { error } = await sb.from('jobs').update(jobData).eq('id', id);
-    if (error) { showToast('Save failed: ' + error.message, 'error'); btn.disabled = false; btn.textContent = 'Save Job'; return; }
+    if (error) { showToast('Save failed: '+error.message,'error'); btn.disabled=false; btn.textContent='Save Job'; return; }
     await sb.from('job_items').delete().eq('job_id', id);
-    await sb.from('job_log').insert({ job_id: id, action: 'Job updated', performed_by: App.staffId, performed_by_name: App.staff?.name });
+    await sb.from('job_log').insert({ job_id:id, action:'Job updated', performed_by:App.staffId, performed_by_name:App.staff?.name });
   } else {
     const { data, error } = await sb.from('jobs').insert(jobData).select().single();
-    if (error) { showToast('Save failed: ' + error.message, 'error'); btn.disabled = false; btn.textContent = 'Save Job'; return; }
+    if (error) { showToast('Save failed: '+error.message,'error'); btn.disabled=false; btn.textContent='Save Job'; return; }
     jobId = data.id;
-    await sb.from('job_log').insert({ job_id: jobId, action: 'Job created', performed_by: App.staffId, performed_by_name: App.staff?.name });
+    await sb.from('job_log').insert({ job_id:jobId, action:'Job created', performed_by:App.staffId, performed_by_name:App.staff?.name });
   }
 
   if (items.length) {
-    await sb.from('job_items').insert(items.map(i => ({ ...i, job_id: jobId })));
+    await sb.from('job_items').insert(items.map(i => ({ ...i, job_id:jobId })));
+  }
+
+  // Save customer to database if checkbox ticked
+  if (document.getElementById('save-customer').checked && customer) {
+    const existing = await sb.from('customers').select('id').eq('name', customer).eq('branch_id', App.branchId).maybeSingle();
+    const custData = {
+      branch_id:   App.branchId,
+      name:        customer,
+      phone:       jobData.customer_phone,
+      address_raw: jobData.address_raw,
+      suburb:      jobData.suburb_raw,
+      postcode:    jobData.postcode,
+      region:      jobData.region,
+      last_delivery: jobData.delivery_date,
+    };
+    if (existing.data) {
+      await sb.from('customers').update(custData).eq('id', existing.data.id);
+    } else {
+      await sb.from('customers').insert(custData);
+    }
   }
 
   btn.disabled = false; btn.textContent = 'Save Job';
@@ -887,136 +860,211 @@ async function saveJob() {
   await loadJobs();
 }
 
+// ---- ADVANCE STATUS ----
+async function openAdvanceModal(jobId) {
+  const j = allJobs.find(x => x.id === jobId);
+  if (!j) return;
+  const next = STATUS_NEXT[j.status];
+  if (!next) return;
+
+  document.getElementById('adv-job-id').value = jobId;
+  document.getElementById('adv-title').textContent = `${j.invoice_number} — ${j.customer_name}`;
+
+  let body = `<div style="margin-bottom:14px;padding:10px 12px;background:var(--bg);border-radius:var(--radius);font-size:13px;color:var(--text2)">
+    <strong>${JOB_STATUSES[j.status]?.label}</strong> → <strong style="color:var(--brand)">${JOB_STATUSES[next]?.label}</strong>
+  </div>`;
+
+  if (next === 'ready') {
+    body += `<div class="form-group" style="margin-bottom:12px">
+      <div class="form-label">Yard location (where did you put it?)</div>
+      <input class="form-input" id="adv-location" placeholder="e.g. Bay 3, Truck 1 side, Shed B" value="${j.yard_location||''}">
+    </div>`;
+  }
+  if (next === 'loaded') {
+    body += `<div class="form-group" style="margin-bottom:12px">
+      <div class="form-label">Loaded by</div>
+      <input class="form-input" id="adv-loader" placeholder="Name" value="${App.staff?.name||''}">
+    </div>`;
+  }
+  if (next === 'part_picked') {
+    body += `<div class="form-group" style="margin-bottom:12px">
+      <div class="form-label">What's been picked so far?</div>
+      <input class="form-input" id="adv-partpick" placeholder="e.g. Sheets picked, waiting on gutters from IBT">
+    </div>`;
+  }
+
+  body += `<div class="divider"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('modal-advance')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAdvance('${jobId}','${next}')">Confirm</button>
+    </div>`;
+
+  document.getElementById('adv-body').innerHTML = body;
+  document.getElementById('modal-advance').style.display = 'flex';
+}
+
+async function confirmAdvance(jobId, nextStatus) {
+  const updates = { status: nextStatus };
+  const locationEl = document.getElementById('adv-location');
+  const loaderEl   = document.getElementById('adv-loader');
+  const partEl     = document.getElementById('adv-partpick');
+
+  if (locationEl && locationEl.value.trim()) updates.yard_location = locationEl.value.trim();
+  if (loaderEl)   updates.loaded_by = App.staffId;
+  if (partEl && partEl.value.trim()) updates.part_picked_notes = partEl.value.trim();
+  if (nextStatus === 'delivered') updates.locked = true;
+  if (nextStatus === 'ready') {
+    updates.ready_confirmed_by = App.staffId;
+    updates.ready_confirmed_at = new Date().toISOString();
+  }
+
+  await sb.from('jobs').update(updates).eq('id', jobId);
+  await sb.from('job_log').insert({ job_id:jobId, action:`Status → ${JOB_STATUSES[nextStatus]?.label}`, performed_by:App.staffId, performed_by_name:App.staff?.name });
+  closeModal('modal-advance');
+  showToast(`Updated to ${JOB_STATUSES[nextStatus]?.label}`);
+  await loadJobs();
+}
+
+// ---- REOPEN ----
+async function reopenJob(jobId) {
+  const j = allJobs.find(x => x.id === jobId);
+  if (!j || !confirm(`Reopen ${j.invoice_number}?`)) return;
+  await sb.from('jobs').update({ locked:false, status:'arrived' }).eq('id', jobId);
+  await sb.from('job_log').insert({ job_id:jobId, action:'Job reopened', performed_by:App.staffId, performed_by_name:App.staff?.name });
+  showToast('Job reopened');
+  await loadJobs();
+}
+
+// ---- MOVE DATE ----
+function openMoveModal(jobId) {
+  const j = allJobs.find(x => x.id === jobId);
+  if (!j) return;
+  document.getElementById('move-job-id').value = jobId;
+  document.getElementById('move-date').value = j.delivery_date||todayStr();
+  document.getElementById('move-slot').value = j.run_slot||'unassigned';
+  document.getElementById('move-reason').value = '';
+  document.getElementById('move-job-info').innerHTML = `<strong>${j.customer_name}</strong> — ${j.invoice_number}<br>Current: ${fmtDate(j.delivery_date||'')} · ${RUN_SLOT_LABELS[j.run_slot]||'Unassigned'}`;
+  document.getElementById('modal-move').style.display = 'flex';
+}
+
+async function confirmMove() {
+  const jobId = document.getElementById('move-job-id').value;
+  const newDate = document.getElementById('move-date').value;
+  const newSlot = document.getElementById('move-slot').value;
+  const reason  = document.getElementById('move-reason').value.trim();
+  const j = allJobs.find(x => x.id === jobId);
+  await sb.from('jobs').update({ delivery_date:newDate, run_slot:newSlot, is_6am_drop:newSlot==='6am' }).eq('id', jobId);
+  await sb.from('job_log').insert({ job_id:jobId, action:`Moved: ${fmtDate(j?.delivery_date)} → ${fmtDate(newDate)} ${newSlot}${reason?' ('+reason+')':''}`, performed_by:App.staffId, performed_by_name:App.staff?.name });
+  closeModal('modal-move');
+  showToast('Date updated');
+  await loadJobs();
+}
+
+// ---- DETAIL / LOG ----
+async function openDetailModal(jobId) {
+  const j = allJobs.find(x => x.id === jobId);
+  if (!j) return;
+  document.getElementById('detail-title').textContent = `${j.invoice_number} — ${j.customer_name}`;
+  document.getElementById('modal-detail').style.display = 'flex';
+  document.getElementById('detail-body').innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+
+  const { data:log } = await sb.from('job_log').select('*').eq('job_id',jobId).order('created_at',{ascending:false});
+  const items = j.job_items||[];
+  const s = JOB_STATUSES[j.status]||{label:j.status,color:'#a3a4a4',bg:'#f0f4f8'};
+
+  document.getElementById('detail-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">STATUS</div>
+        <span class="status-pill" style="background:${s.bg};color:${s.color}">${s.label}</span>
+        ${readinessPill(j.readiness)}
+      </div>
+      <div><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">TYPE</div>${typeTag(j.type)||'Standard'}</div>
+      <div><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">CUSTOMER</div><div style="font-size:13px;font-weight:500">${j.customer_name}</div></div>
+      <div><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">PHONE</div><div style="font-size:13px">${j.customer_phone?phoneLink(j.customer_phone):'—'}</div></div>
+      <div style="grid-column:span 2"><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">ADDRESS</div>
+        <div style="font-size:13px;color:var(--text2)">${j.address_raw||'—'}</div>
+        ${j.address_raw?`<div style="margin-top:4px">${mapsLink(j.address_raw,j.suburb_raw,j.postcode)}</div>`:''}
+      </div>
+      <div><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">DELIVERY DATE</div><div style="font-size:13px">${fmtDate(j.delivery_date||'')}</div></div>
+      <div><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">RUN</div><div style="font-size:13px">${RUN_SLOT_LABELS[j.run_slot]||'Unassigned'}</div></div>
+      ${j.yard_location?`<div style="grid-column:span 2"><div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:4px">YARD LOCATION</div><div style="font-size:13px;color:var(--teal);font-weight:500">📍 ${j.yard_location}</div></div>`:''}
+    </div>
+    ${items.length?`<div style="margin-bottom:16px">
+      <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:8px">ORDER ITEMS</div>
+      ${items.map(i=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:13px">
+        <span>${i.product_name}</span>
+        <span style="font-family:var(--mono);font-weight:600;color:var(--brand)">${i.quantity} × ${fmtLen(i.length_mm)}</span>
+      </div>`).join('')}
+    </div>`:''}
+    <div>
+      <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:8px">AUDIT LOG</div>
+      ${!log?.length?'<div style="font-size:13px;color:var(--text3)">No log entries yet.</div>':
+        log.map(l=>`<div class="log-entry">
+          <div class="log-dot"></div>
+          <div style="flex:1">
+            <div style="font-size:13px;color:var(--text)">${l.action}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px;font-family:var(--mono)">${fmtDateTime(l.created_at)}${l.performed_by_name?' · '+l.performed_by_name:''}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ---- QR LABEL ----
+async function openLabelModal(jobId) {
+  const j = allJobs.find(x => x.id === jobId);
+  if (!j) return;
+  document.getElementById('modal-label').style.display = 'flex';
+  const items = j.job_items||[];
+  const qrData = `${window.location.origin}/no1-delivery/driver-run.html?job=${j.id}`;
+
+  document.getElementById('label-body').innerHTML = `
+    <div id="print-label" style="background:#fff;border:1px solid #ccc;border-radius:8px;padding:16px;font-family:var(--mono)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-size:9px;font-weight:700;color:#00479f;letter-spacing:.5px;margin-bottom:3px">NO.1 DELIVERY — PRESTONS</div>
+          <div style="font-size:16px;font-weight:700;color:#00479f">${j.invoice_number}</div>
+          <div style="font-size:14px;font-weight:600;color:#1a1a2e">${j.customer_name}</div>
+          ${j.customer_phone?`<div style="font-size:11px;color:#565656">📞 ${j.customer_phone}</div>`:''}
+        </div>
+        <div id="qr-canvas"></div>
+      </div>
+      <div style="font-size:11px;color:#565656;margin-bottom:6px">${[j.address_raw,j.suburb_raw,j.postcode].filter(Boolean).join(', ')}</div>
+      <div style="font-size:11px;color:#1a1a2e;line-height:1.7;margin-bottom:6px">${items.map(i=>`${i.quantity} × ${fmtLen(i.length_mm)} ${i.product_name}`).join('<br>')}</div>
+      ${j.max_item_length_mm>6000?'<div style="font-size:10px;font-weight:700;color:#b91c1c;margin-bottom:3px">⚠ 9M TRUCK REQUIRED</div>':''}
+      ${j.po_number?`<div style="font-size:10px;font-weight:700;color:#0e7490">PO: ${j.po_number}${j.supplier_name?' — '+j.supplier_name:''}</div>`:''}
+      ${j.delivery_date?`<div style="font-size:10px;color:#565656;margin-top:4px">Delivery: ${fmtDate(j.delivery_date)}${j.run_slot&&j.run_slot!=='unassigned'?' — '+(RUN_SLOT_LABELS[j.run_slot]||j.run_slot):''}</div>`:''}
+    </div>`;
+
+  setTimeout(() => {
+    const el = document.getElementById('qr-canvas');
+    if (el && typeof QRCode !== 'undefined') {
+      el.innerHTML = '';
+      new QRCode(el, { text:qrData, width:72, height:72, colorDark:'#00479f', colorLight:'#ffffff' });
+    }
+  }, 150);
+}
+
+// ---- DELETE ----
 async function deleteJob() {
   const id = document.getElementById('job-id').value;
   if (!id) return;
   const j = allJobs.find(x => x.id === id);
-  if (!confirm(`Delete ${j?.invoice_number} — ${j?.customer_name}? This cannot be undone.`)) return;
-  const { error } = await sb.from('jobs').delete().eq('id', id);
-  if (error) { showToast('Could not delete: ' + error.message, 'error'); return; }
+  if (!confirm(`Delete ${j?.invoice_number} — ${j?.customer_name}?`)) return;
+  await sb.from('jobs').delete().eq('id', id);
   closeModal('modal-job');
   showToast('Job deleted');
   await loadJobs();
 }
 
-// Toggle supplier section
-function toggleSupplier() {
-  const sec = document.getElementById('supplier-section');
-  const lbl = document.getElementById('supplier-toggle-label');
-  const isHidden = sec.style.display === 'none';
-  sec.style.display = isHidden ? 'block' : 'none';
-  lbl.textContent = isHidden ? '− Hide supplier / PO section' : '+ Add supplier / PO collection (optional)';
-}
-
-// NSW postcode to suburb lookup (common Sydney/regional postcodes)
-const POSTCODE_MAP = {
-  '2000':'Sydney','2010':'Surry Hills','2016':'Redfern','2020':'Mascot',
-  '2026':'Bondi','2031':'Randwick','2033':'Kingsford','2042':'Newtown',
-  '2048':'Balmain','2060':'North Sydney','2065':'St Leonards','2066':'Lane Cove',
-  '2067':'Chatswood','2068':'Willoughby','2072':'Pymble','2073':'Turramurra',
-  '2076':'Hornsby','2077':'Asquith','2080':'Mount Colah','2082':'Wisemans Ferry',
-  '2083':'Brooklyn','2085':'Mosman','2086':'Narrabeen','2087':'Frenchs Forest',
-  '2088':'Mosman','2089':'Neutral Bay','2090':'Cremorne','2092':'Seaforth',
-  '2093':'Manly','2095':'Manly','2099':'Dee Why','2100':'Curl Curl',
-  '2101':'Collaroy','2102':'Narrabeen','2103':'Mona Vale','2106':'Palm Beach',
-  '2107':'Avalon','2110':'Ryde','2111':'Rhodes','2112':'Ryde',
-  '2113':'Meadowbank','2114':'Eastwood','2115':'Ermington','2116':'Ryde',
-  '2117':'Pendle Hill','2118':'Carlingford','2119':'Beecroft','2120':'Pennant Hills',
-  '2121':'Epping','2122':'Eastwood','2125':'West Pennant Hills','2126':'Cherrybrook',
-  '2127':'Newington','2128':'Silverwater','2130':'Summer Hill','2131':'Ashfield',
-  '2132':'Burwood','2133':'Burwood','2134':'Strathfield','2135':'Strathfield',
-  '2136':'Burwood','2137':'Concord','2138':'Rhodes','2139':'Rozelle',
-  '2140':'Homebush','2141':'Berala','2142':'Granville','2143':'Fairfield',
-  '2144':'Auburn','2145':'Westmead','2146':'Toongabbie','2147':'Kings Langley',
-  '2148':'Blacktown','2150':'Parramatta','2151':'North Rocks','2152':'Baulkham Hills',
-  '2153':'Baulkham Hills','2154':'Castle Hill','2155':'Rouse Hill','2156':'Glenhaven',
-  '2157':'Galston','2158':'Dural','2159':'Arcadia','2160':'Merrylands',
-  '2161':'Guildford','2162':'Chester Hill','2163':'Villawood','2164':'Smithfield',
-  '2165':'Fairfield','2166':'Canley Vale','2167':'Cabramatta','2168':'Miller',
-  '2170':'Liverpool','2171':'Casula','2172':'Moorebank','2173':'Pleasure Point',
-  '2174':'Holsworthy','2175':'Horningsea Park','2176':'Wetherill Park','2177':'Bossley Park',
-  '2178':'Horsley Park','2179':'Rossmore','2190':'Greenacre','2191':'Lakemba',
-  '2192':'Belmore','2193':'Canterbury','2194':'Campsie','2195':'Lakemba',
-  '2196':'Punchbowl','2197':'Bass Hill','2198':'Georges Hall','2199':'Bankstown',
-  '2200':'Bankstown','2203':'Dulwich Hill','2204':'Marrickville','2205':'Arncliffe',
-  '2206':'Earlwood','2207':'Bexley','2208':'Kingsgrove','2209':'Beverly Hills',
-  '2210':'Lugarno','2211':'Padstow','2212':'Revesby','2213':'Revesby',
-  '2214':'Padstow Heights','2216':'Rockdale','2217':'Ramsgate','2218':'Kogarah',
-  '2219':'Dolls Point','2220':'Hurstville','2221':'Blakehurst','2222':'Penshurst',
-  '2223':'Mortdale','2224':'Oyster Bay','2225':'Como','2226':'Jannali',
-  '2227':'Miranda','2228':'Caringbah','2229':'Lilli Pilli','2230':'Cronulla',
-  '2232':'Sutherland','2233':'Kirrawee','2234':'Menai','2250':'Gosford',
-  '2251':'Avoca Beach','2256':'Woy Woy','2257':'Terrigal','2258':'Wyong',
-  '2259':'Tuggerah','2260':'The Entrance','2261':'Blue Haven','2262':'Budgewoi',
-  '2263':'Toukley','2264':'Lake Munmorah','2265':'Morisset','2281':'Swansea',
-  '2283':'Toronto','2284':'Charlestown','2285':'Hamilton','2289':'Jesmond',
-  '2290':'Lambton','2291':'Merewether','2292':'Hamilton','2293':'Islington',
-  '2295':'Mayfield','2296':'Islington','2297':'Georgetown','2298':'Waratah',
-  '2299':'Wallsend','2300':'Newcastle','2302':'Newcastle','2303':'Hamilton',
-  '2304':'Broadmeadow','2305':'New Lambton','2306':'Wallsend','2307':'Jesmond',
-  '2308':'University of Newcastle','2315':'Nelson Bay','2316':'Shoal Bay',
-  '2317':'Corlette','2318':'Medowie','2319':'Mallabula','2320':'Maitland',
-  '2321':'Cessnock','2322':'Branxton','2323':'Rutherford','2324':'Paxton',
-  '2325':'Cessnock','2326':'Aberdare','2327':'Kurri Kurri','2328':'Muswellbrook',
-  '2330':'Singleton','2333':'Denman','2335':'Broke','2340':'Tamworth',
-  '2350':'Armidale','2360':'Glen Innes','2370':'Inverell','2380':'Narrabri',
-  '2390':'Moree','2400':'Walgett','2460':'Grafton','2470':'Lismore',
-  '2480':'Byron Bay','2481':'Byron Bay','2482':'Bangalow','2483':'Mullumbimby',
-  '2484':'Murwillumbah','2485':'Tweed Heads','2486':'Tweed Heads','2487':'Pottsville',
-  '2488':'Kingscliff','2489':'Cabarita Beach','2500':'Wollongong','2502':'Warrawong',
-  '2505':'Port Kembla','2506':'Unanderra','2508':'Helensburgh','2515':'Thirroul',
-  '2516':'Bulli','2517':'Austinmer','2518':'Corrimal','2519':'Wollongong',
-  '2520':'Wollongong','2525':'Fairy Meadow','2526':'Figtree','2527':'Albion Park',
-  '2528':'Shell Cove','2529':'Oak Flats','2530':'Dapto','2533':'Berry',
-  '2534':'Nowra','2536':'Batemans Bay','2537':'Braidwood','2538':'Ulladulla',
-  '2539':'Milton','2540':'Nowra','2541':'Nowra','2546':'Bega',
-  '2548':'Merimbula','2550':'Merimbula','2560':'Campbelltown','2563':'Camden',
-  '2564':'Ingleburn','2565':'Leumeah','2566':'Minto','2567':'Narellan',
-  '2568':'Narellan Vale','2569':'Camden','2570':'Camden','2571':'Picton',
-  '2572':'Bargo','2573':'Tahmoor','2574':'Thirlmere','2575':'Mittagong',
-  '2576':'Bowral','2577':'Moss Vale','2578':'Bundanoon','2579':'Marulan',
-  '2580':'Goulburn','2582':'Gunning','2583':'Crookwell','2584':'Yass',
-  '2585':'Young','2586':'Boorowa','2587':'Cootamundra','2588':'Temora',
-  '2590':'Wagga Wagga','2594':'Harden','2600':'Canberra','2601':'Braddon',
-  '2602':'Downer','2603':'Griffith','2604':'Deakin','2605':'Curtin',
-  '2606':'Chifley','2607':'Calwell','2608':'Fyshwick','2609':'Pialligo',
-  '2610':'Curtin','2611':'Weston Creek','2612':'Turner','2614':'Evatt',
-  '2615':'Charnwood','2616':'Holt','2617':'Gungahlin','2618':'Hall',
-  '2619':'Jerrabomberra','2620':'Queanbeyan','2621':'Bungendore','2630':'Cooma',
-  '2640':'Albury','2641':'Lavington','2642':'Jindera','2643':'Howlong',
-  '2644':'Holbrook','2645':'Culcairn','2646':'Henty','2647':'Walbundrie',
-  '2648':'Wentworth','2650':'Wagga Wagga','2651':'Wagga Wagga','2652':'Coolamon',
-  '2680':'Griffith','2700':'Narrandera','2710':'Hay','2720':'Tumut',
-  '2730':'Tumbarumba','2740':'Bathurst','2745':'Penrith','2747':'St Marys',
-  '2748':'Penrith','2749':'Penrith','2750':'Penrith','2752':'Yarramundi',
-  '2753':'Richmond','2754':'Windsor','2755':'Windsor','2756':'Wilberforce',
-  '2757':'Kurrajong','2758':'Kurrajong Heights','2759':'Emu Plains','2760':'Kingswood',
-  '2761':'Blacktown','2762':'Marsden Park','2763':'Blacktown','2765':'Riverstone',
-  '2766':'Rooty Hill','2767':'Eastern Creek','2768':'Stanhope Gardens','2769':'The Ponds',
-  '2770':'Mount Druitt','2773':'Springwood','2774':'Faulconbridge','2775':'Kurrajong',
-  '2776':'Blaxland','2777':'Glenbrook','2778':'Hazelbrook','2779':'Woodford',
-  '2780':'Katoomba','2782':'Leura','2783':'Wentworth Falls','2784':'Blackheath',
-  '2785':'Mount Victoria','2786':'Lithgow','2787':'Oberon','2790':'Bathurst',
-  '2795':'Bathurst','2800':'Orange','2820':'Wellington','2830':'Dubbo',
-  '2840':'Bourke','2850':'Mudgee','2860':'Parkes','2870':'Forbes',
-  '2880':'Broken Hill','2890':'Dareton',
-  // Prestons area
-  '2170':'Liverpool','2171':'Casula','2172':'Moorebank','2173':'Pleasure Point',
-  '2174':'Holsworthy','2175':'Horningsea Park','2176':'Wetherill Park',
-  '2177':'Bossley Park','2178':'Horsley Park','2179':'Rossmore',
-  '2197':'Bass Hill','2198':'Georges Hall','2199':'Bankstown',
-};
-
-function lookupPostcode(postcode) {
-  if (postcode.length !== 4) return;
-  const suburb = POSTCODE_MAP[postcode];
-  if (suburb) {
-    const suburbEl = document.getElementById('job-suburb');
-    if (suburbEl && !suburbEl.value) {
-      suburbEl.value = suburb;
-    }
+// Close dropdowns when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('#job-customer') && !e.target.closest('#customer-dropdown')) {
+    document.getElementById('customer-dropdown').style.display = 'none';
   }
-}
+  if (!e.target.closest('#job-address') && !e.target.closest('#address-dropdown')) {
+    document.getElementById('address-dropdown').style.display = 'none';
+  }
+});
 
 init();
 </script>

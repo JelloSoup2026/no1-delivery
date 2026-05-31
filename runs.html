@@ -148,6 +148,7 @@
       <div class="form-group">
         <div class="form-label">Run slot</div>
         <select class="form-select" id="run-slot">
+          <option value="6am">⚡ 6am Drop</option>
           <option value="1st">1st Run</option>
           <option value="2nd">2nd Run</option>
           <option value="3rd">3rd Run</option>
@@ -410,7 +411,7 @@ function renderStopCard(j, num, runId, runJobId) {
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
           ${statusPill(j.status)}
-          ${mapsLink(j.address_raw, j.suburb_raw, j.postcode)}
+          ${mapsLink(j.address_raw)}
         </div>
       </div>
       ${items.length ? `<div class="stop-items">${items.map(i => `<strong style="color:var(--text);font-family:var(--mono)">${i.quantity}×${fmtLen(i.length_mm)}</strong> ${i.product_name}`).join(' &nbsp;·&nbsp; ')}</div>` : ''}
@@ -528,7 +529,7 @@ async function autoBuilRuns() {
 
   // Check existing slots used today
   const usedSlots = allRuns.map(r => r.slot);
-  const availableSlots = ['1st','2nd','3rd','4th','5th'].filter(s => !usedSlots.includes(s));
+  const availableSlots = ['6am','1st','2nd','3rd','4th','5th'].filter(s => !usedSlots.includes(s));
 
   if (!availableSlots.length) {
     showToast('All run slots are already used for this date', 'warn');
@@ -629,6 +630,7 @@ async function advanceStop(jobId, runId) {
 
   const updates = { status: next };
   if (next === 'delivered') updates.locked = true;
+  if (next === 'ready') { updates.ready_confirmed_by = App.staffId; updates.ready_confirmed_at = new Date().toISOString(); }
 
   await sb.from('jobs').update(updates).eq('id', jobId);
   await sb.from('job_log').insert({ job_id: jobId, action: `Status → ${JOB_STATUSES[next]?.label}`, performed_by: App.staffId, performed_by_name: App.staff?.name });

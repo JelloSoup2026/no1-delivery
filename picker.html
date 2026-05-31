@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>No.1 Delivery — Picker</title>
+<title>No.1 Delivery — Picking List</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -18,43 +18,53 @@
   --radius:10px;--radius-lg:16px;
   --font:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
 }
-body{background:var(--bg);font-family:var(--font);font-size:14px;min-height:100vh;padding-bottom:40px}
-.header{background:var(--brand);padding:16px;position:sticky;top:0;z-index:10}
-.header-brand{font-size:11px;color:rgba(255,255,255,.6);font-weight:500;letter-spacing:.3px}
-.header-title{font-size:17px;font-weight:700;color:#fff;margin-top:2px}
-.header-sub{font-size:12px;color:rgba(255,255,255,.7);margin-top:3px;display:flex;align-items:center;justify-content:space-between}
+body{background:var(--bg);font-family:var(--font);font-size:14px;min-height:100vh;padding-bottom:60px}
+.header{background:var(--brand);padding:14px 16px;position:sticky;top:0;z-index:10}
+.header-brand{font-size:10px;color:rgba(255,255,255,.6);font-weight:500;letter-spacing:.3px}
+.header-title{font-size:16px;font-weight:700;color:#fff;margin-top:2px}
+.header-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:3px;display:flex;align-items:center;justify-content:space-between}
 .signout-btn{background:rgba(255,255,255,.15);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:500;padding:4px 10px;cursor:pointer;font-family:var(--font)}
-.content{padding:14px}
-.filter-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
-.filter-tab{padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;border:0.5px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s}
+.content{padding:12px}
+.progress-bar{height:6px;background:var(--brand-surface);border-radius:20px;margin-bottom:12px;overflow:hidden}
+.progress-fill{height:100%;background:var(--brand);border-radius:20px;transition:width .4s}
+.filter-tabs{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
+.filter-tab{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:0.5px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s}
 .filter-tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
-.pick-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px;transition:border .15s}
-.pick-card:hover{border-color:var(--border2)}
-.pick-card.priority{border-left:3px solid var(--amber-border)}
-.pick-card.recovery{border-left:3px solid var(--red-border)}
-.pick-card.shed{border-left:3px solid var(--teal-border)}
+/* Run group header */
+.run-group{margin-bottom:16px}
+.run-group-header{background:var(--brand);border-radius:var(--radius) var(--radius) 0 0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.run-group-title{font-size:13px;font-weight:700;color:#fff}
+.run-group-sub{font-size:11px;color:rgba(255,255,255,.7)}
+.run-group-body{background:var(--surface);border:0.5px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);overflow:hidden}
+/* IBT group */
+.ibt-group-header{background:#5b21b6;border-radius:var(--radius) var(--radius) 0 0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.ibt-group-title{font-size:13px;font-weight:700;color:#fff}
+/* Pick card */
+.pick-card{padding:12px 14px;border-bottom:0.5px solid var(--border);transition:background .1s}
+.pick-card:last-child{border-bottom:none}
 .pick-card.done{opacity:.6}
-.invoice-num{font-size:12px;font-weight:700;color:var(--brand);font-family:var(--mono);letter-spacing:.3px}
-.item-line{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)}
+.pick-card.is-6am{border-left:3px solid #dc2626}
+.invoice-num{font-size:11px;font-weight:700;color:var(--brand);font-family:var(--mono);letter-spacing:.3px}
+.item-line{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px dashed var(--border)}
 .item-line:last-child{border-bottom:none}
-.item-check{width:20px;height:20px;border-radius:4px;border:2px solid var(--border2);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.item-check{width:22px;height:22px;border-radius:5px;border:2px solid var(--border2);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .item-check.checked{background:var(--green);border-color:var(--green)}
-.action-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:var(--radius);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;border:0.5px solid;transition:all .15s}
+.action-btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:4px;padding:7px 12px;border-radius:var(--radius);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;border:0.5px solid;transition:all .15s}
 .btn-primary{background:var(--brand);color:#fff;border-color:var(--brand)}
-.btn-primary:hover{background:#003a85}
 .btn-ghost{background:transparent;color:var(--text2);border-color:var(--border)}
 .btn-ghost:hover{border-color:var(--brand);color:var(--brand)}
-.status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-.spinner{display:inline-block;width:24px;height:24px;border:3px solid rgba(0,71,159,.15);border-top-color:var(--brand);border-radius:50%;animation:spin .7s linear infinite}
+.btn-ready{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.btn-ibt{background:#f5f3ff;color:#5b21b6;border-color:#c4b5fd}
+.location-input{border:0.5px solid var(--border);border-radius:var(--radius);padding:6px 10px;font-family:var(--font);font-size:12px;color:var(--text);background:var(--surface);width:100%;outline:none;margin-top:6px;transition:border .15s}
+.location-input:focus{border-color:var(--brand)}
+.status-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.spinner{display:inline-block;width:20px;height:20px;border:3px solid rgba(0,71,159,.15);border-top-color:var(--brand);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loading{display:flex;align-items:center;justify-content:center;padding:48px;gap:12px;color:var(--text2);font-size:13px}
-.progress-bar{height:6px;background:var(--brand-surface);border-radius:20px;margin-bottom:16px;overflow:hidden}
-.progress-fill{height:100%;background:var(--brand);border-radius:20px;transition:width .4s}
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;gap:10px;color:var(--text2);font-size:13px}
 </style>
 </head>
 <body>
-
 <div class="header">
   <div class="header-brand">NO.1 DELIVERY · PRESTONS</div>
   <div class="header-title" id="header-title">Picking List</div>
@@ -65,64 +75,58 @@ body{background:var(--bg);font-family:var(--font);font-size:14px;min-height:100v
 </div>
 
 <div class="content">
-  <div id="progress-wrap" style="display:none">
-    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px">
-      <span>Picking progress</span>
-      <span id="progress-label">0 of 0 picked</span>
+  <div id="progress-wrap" style="display:none;margin-bottom:6px">
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px">
+      <span>Today's picking progress</span>
+      <span id="progress-label">0 of 0 ready</span>
     </div>
     <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
   </div>
 
   <div class="filter-tabs">
-    <button class="filter-tab active" onclick="setFilter('unpicked',this)">To pick</button>
-    <button class="filter-tab" onclick="setFilter('picked',this)">Picked</button>
-    <button class="filter-tab" onclick="setFilter('all',this)">All</button>
+    <button class="filter-tab active" onclick="setFilter('todo',this)">To pick</button>
+    <button class="filter-tab" onclick="setFilter('ibt',this)">Waiting IBT</button>
+    <button class="filter-tab" onclick="setFilter('done',this)">Picked / Ready</button>
+    <button class="filter-tab" onclick="setFilter('all',this)">All today</button>
   </div>
 
-  <div id="pick-list">
-    <div class="loading"><div class="spinner"></div> Loading picking list...</div>
-  </div>
+  <div id="pick-list"><div class="loading"><div class="spinner"></div> Loading...</div></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
 <script>
 let allJobs = [];
-let currentFilter = 'unpicked';
-
-
+let currentFilter = 'todo';
 
 async function init() {
   const ok = await initApp(['picker','planner','branch_manager','super_admin']);
   if (!ok) return;
-
-  document.getElementById('header-title').textContent = `Hi ${App.staff?.name || 'there'} — Picking List`;
-  document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-AU', {
-    weekday:'long', day:'numeric', month:'long'
-  });
-
+  document.getElementById('header-title').textContent = `Hi ${App.staff?.name||'there'} — Picking`;
+  document.getElementById('header-date').textContent = new Date().toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'});
   await loadJobs();
 }
 
 async function loadJobs() {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayStr();
   const { data } = await sb.from('jobs')
     .select('*, job_items(*)')
     .eq('delivery_date', today)
-    .in('status', ['unpicked','picked','loaded'])
-    .order('type').order('run_slot');
-
+    .not('status', 'in', '("departed","arrived","delivered")')
+    .order('is_6am_drop', { ascending: false })
+    .order('run_slot')
+    .order('type');
   allJobs = data || [];
   renderProgress();
   renderList();
 }
 
 function renderProgress() {
-  const total  = allJobs.length;
-  const picked = allJobs.filter(j => j.status === 'picked' || j.status === 'loaded').length;
-  const pct    = total ? Math.round(picked / total * 100) : 0;
+  const total = allJobs.length;
+  const ready = allJobs.filter(j => ['ready','loaded'].includes(j.status)).length;
+  const pct   = total ? Math.round(ready/total*100) : 0;
   document.getElementById('progress-wrap').style.display = total ? 'block' : 'none';
-  document.getElementById('progress-label').textContent = `${picked} of ${total} picked`;
+  document.getElementById('progress-label').textContent = `${ready} of ${total} ready`;
   document.getElementById('progress-fill').style.width = pct + '%';
 }
 
@@ -136,120 +140,202 @@ function setFilter(filter, btn) {
 function renderList() {
   const el = document.getElementById('pick-list');
   let jobs = [...allJobs];
-  if (currentFilter === 'unpicked') jobs = jobs.filter(j => j.status === 'unpicked');
-  if (currentFilter === 'picked')   jobs = jobs.filter(j => j.status === 'picked' || j.status === 'loaded');
+
+  if (currentFilter === 'todo') {
+    jobs = jobs.filter(j => ['unpicked','part_picked','waiting_fabrication','waiting_supplier'].includes(j.status));
+  } else if (currentFilter === 'ibt') {
+    jobs = jobs.filter(j => j.status === 'waiting_ibt');
+  } else if (currentFilter === 'done') {
+    jobs = jobs.filter(j => ['ready','loaded'].includes(j.status));
+  }
 
   if (!jobs.length) {
     el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text3)">
-      <div style="font-size:32px;margin-bottom:10px">${currentFilter==='unpicked'?'✓':'📦'}</div>
-      <div style="font-size:14px;font-weight:500;color:var(--text2)">${currentFilter==='unpicked'?'All jobs picked for today':'No picked jobs yet'}</div>
+      <div style="font-size:32px;margin-bottom:10px">${currentFilter==='todo'?'✓':'📦'}</div>
+      <div style="font-size:14px;font-weight:500;color:var(--text2)">${currentFilter==='todo'?'All jobs picked for today!':'Nothing here yet.'}</div>
     </div>`;
     return;
   }
 
-  el.innerHTML = jobs.map(j => {
-    const items = j.job_items || [];
-    const isDone = j.status === 'picked' || j.status === 'loaded';
-    const s = JOB_STATUSES[j.status] || {label:j.status,color:'#a3a4a4',bg:'#f0f4f8'};
-    return `
-    <div class="pick-card ${j.type} ${isDone?'done':''}">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
-        <div>
-          <div class="invoice-num">${j.invoice_number}</div>
-          <div style="font-size:15px;font-weight:700;color:var(--text);margin-top:2px">${j.customer_name}</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:1px">${j.suburb_raw||''}${j.run_slot&&j.run_slot!=='unassigned'?' · '+j.run_slot+' run':''}</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-          <span class="status-pill" style="background:${s.bg};color:${s.color}">${s.label}</span>
-          ${j.type!=='standard'?`<span style="font-size:10px;font-weight:700;color:${j.type==='priority'?'var(--amber)':j.type==='recovery'?'var(--red)':'var(--teal)'}">${j.type==='priority'?'⚡ Priority':j.type==='recovery'?'🔴 Recovery':'🏠 Shed'}</span>`:''}
-          ${j.max_item_length_mm>6000?'<span style="font-size:10px;font-weight:700;color:var(--red)">9m truck</span>':''}
-        </div>
+  // Group by run slot
+  if (currentFilter === 'ibt') {
+    el.innerHTML = renderIBTGroup(jobs);
+    return;
+  }
+
+  const slots = ['6am','1st','2nd','3rd','4th','5th','unassigned'];
+  const groups = {};
+  jobs.forEach(j => {
+    const slot = j.run_slot || 'unassigned';
+    if (!groups[slot]) groups[slot] = [];
+    groups[slot].push(j);
+  });
+
+  el.innerHTML = slots
+    .filter(s => groups[s]?.length)
+    .map(s => renderRunGroup(s, groups[s]))
+    .join('');
+}
+
+function renderRunGroup(slot, jobs) {
+  const label = RUN_SLOT_LABELS[slot] || 'Unassigned';
+  const ready = jobs.filter(j => ['ready','loaded'].includes(j.status)).length;
+  const is6am = slot === '6am';
+
+  return `
+  <div class="run-group">
+    <div class="run-group-header" style="${is6am?'background:#dc2626':''}">
+      <div>
+        <div class="run-group-title">${is6am?'⚡ ':''} ${label}</div>
+        <div class="run-group-sub">${jobs.length} job${jobs.length!==1?'s':''} · ${ready} ready</div>
       </div>
-
-      <div style="background:var(--bg);border-radius:var(--radius);padding:8px 12px;margin-bottom:8px">
-        <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:6px">ITEMS TO PICK</div>
-        ${items.map((item,i) => `
-        <div class="item-line">
-          <div class="item-check ${isDone?'checked':''}" onclick="toggleItem(this)" id="item-${j.id}-${i}">
-            ${isDone?'<span style="color:#fff;font-size:12px">✓</span>':''}
-          </div>
-          <div style="flex:1">
-            <span style="font-family:var(--mono);font-weight:700;color:var(--brand)">${item.quantity} × ${fmtLen(item.length_mm)}</span>
-            <span style="color:var(--text2);margin-left:6px">${item.product_name}</span>
-          </div>
-        </div>`).join('')}
+      <div style="font-size:12px;font-weight:700;color:${ready===jobs.length?'#4ade80':'rgba(255,255,255,.6)'}">
+        ${ready===jobs.length?'✓ All ready':`${jobs.length-ready} to go`}
       </div>
+    </div>
+    <div class="run-group-body">
+      ${jobs.map(j => renderPickCard(j)).join('')}
+    </div>
+  </div>`;
+}
 
-      ${j.notes?`<div style="font-size:11px;color:var(--text3);font-style:italic;margin-bottom:8px">📝 ${j.notes}</div>`:''}
-      ${j.po_number?`<div style="font-size:11px;font-weight:600;color:var(--teal);margin-bottom:8px">📦 Collect PO: ${j.po_number} from ${j.supplier_name||'supplier'}</div>`:''}
+function renderIBTGroup(jobs) {
+  return `
+  <div class="run-group">
+    <div class="ibt-group-header">
+      <div>
+        <div class="ibt-group-title">🔄 Waiting on IBT</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.7)">${jobs.length} job${jobs.length!==1?'s':''} — check arrival with yard supervisor</div>
+      </div>
+    </div>
+    <div class="run-group-body">
+      ${jobs.map(j => renderPickCard(j)).join('')}
+    </div>
+  </div>`;
+}
 
-      ${!isDone ? `
-      <div class="action-row">
-        <button class="btn btn-primary" onclick="markPicked('${j.id}')">✓ Mark picked</button>
-      </div>` : `
-      <div class="action-row">
-        ${j.status==='picked'?`<button class="btn btn-primary" onclick="markLoaded('${j.id}')">📦 Mark loaded</button>`:''}
-        <span style="font-size:12px;color:var(--green);font-weight:600;display:flex;align-items:center;gap:4px">✓ ${j.status==='loaded'?'Loaded':'Picked'}${j.picked_by?' by '+j.picked_by:''}</span>
-      </div>`}
-    </div>`;
-  }).join('');
+function renderPickCard(j) {
+  const items = j.job_items || [];
+  const isDone = ['ready','loaded'].includes(j.status);
+  const s = JOB_STATUSES[j.status] || { label:j.status, color:'#a3a4a4', bg:'#f0f4f8' };
+  const isIBT = j.status === 'waiting_ibt';
+
+  return `
+  <div class="pick-card ${isDone?'done':''} ${j.is_6am_drop?'is-6am':''}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="invoice-num">${j.invoice_number}</span>
+          ${j.is_6am_drop?'<span style="background:#fef2f2;color:#dc2626;border:0.5px solid #fca5a5;border-radius:20px;font-size:10px;font-weight:700;padding:1px 7px">6am</span>':''}
+          ${j.type!=='standard'?`<span style="font-size:10px;font-weight:700;color:${j.type==='priority'?'var(--amber)':j.type==='recovery'?'var(--red)':'var(--teal)'}">${j.type==='priority'?'⚡':j.type==='recovery'?'🔴':'🏠'}</span>`:''}
+        </div>
+        <div style="font-size:14px;font-weight:600;color:var(--text);margin-top:2px">${j.customer_name}</div>
+        <div style="font-size:11px;color:var(--text2)">${j.suburb_raw||''}${j.address_raw?' — '+j.address_raw:''}</div>
+      </div>
+      <span class="status-pill" style="background:${s.bg};color:${s.color};flex-shrink:0">${s.label}</span>
+    </div>
+
+    ${isIBT&&j.ibt_branch?`<div style="background:#f5f3ff;border-radius:6px;padding:6px 10px;font-size:11px;color:#5b21b6;margin-bottom:6px">🔄 IBT from ${j.ibt_branch}${j.ibt_expected_date?' · Expected '+fmtDate(j.ibt_expected_date):''}</div>`:''}
+
+    <div style="background:var(--bg);border-radius:var(--radius);padding:8px 10px;margin-bottom:8px">
+      <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.3px;margin-bottom:5px">ITEMS${j.po_number?' — PO: '+j.po_number:''}</div>
+      ${items.map((item,i) => `
+      <div class="item-line">
+        <div class="item-check ${isDone?'checked':''}" onclick="toggleItem(this)">
+          ${isDone?'<span style="color:#fff;font-size:11px">✓</span>':''}
+        </div>
+        <div style="flex:1">
+          <span style="font-family:var(--mono);font-weight:700;color:var(--brand)">${item.quantity} × ${fmtLen(item.length_mm)}</span>
+          <span style="color:var(--text2);margin-left:6px">${item.product_name}</span>
+          ${item.length_mm>6000?'<span style="font-size:9px;background:var(--red-bg);color:var(--red);border-radius:4px;padding:1px 5px;margin-left:4px">9m</span>':''}
+        </div>
+      </div>`).join('')}
+    </div>
+
+    ${j.yard_location?`<div style="font-size:11px;color:var(--teal);margin-bottom:6px;font-weight:500">📍 ${j.yard_location}</div>`:''}
+    ${j.notes?`<div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-style:italic">📝 ${j.notes}</div>`:''}
+    ${j.part_picked_notes?`<div style="font-size:11px;color:var(--amber);margin-bottom:6px">⚠ Part picked: ${j.part_picked_notes}</div>`:''}
+
+    <div class="action-btns">
+      ${isIBT ? `
+        <button class="btn btn-ibt" onclick="markIBTArrived('${j.id}')">✓ IBT arrived — start picking</button>
+      ` : !isDone ? `
+        <button class="btn btn-primary" onclick="markReady('${j.id}')">✓ Mark ready</button>
+        <button class="btn btn-ghost" onclick="markPartPicked('${j.id}')">Part picked</button>
+      ` : `
+        <span style="font-size:12px;color:var(--green);font-weight:600">✓ ${j.status==='loaded'?'Loaded':'Ready'}</span>
+        ${j.status==='ready'?`<button class="btn btn-ghost" onclick="markLoaded('${j.id}')">📦 Mark loaded</button>`:''}
+      `}
+      <input class="location-input" placeholder="📍 Set yard location (bay, truck, area)" 
+        value="${j.yard_location||''}"
+        onchange="updateLocation('${j.id}',this.value)"
+        style="flex:1;min-width:120px">
+    </div>
+  </div>`;
+}
+
+function fmtLen(mm) {
+  if (!mm && mm !== 0) return '—';
+  return (mm/1000).toFixed(3).replace(/\.?0+$/,'') + 'm';
 }
 
 function toggleItem(el) {
   const isChecked = el.classList.contains('checked');
   el.classList.toggle('checked', !isChecked);
-  el.innerHTML = !isChecked ? '<span style="color:#fff;font-size:12px">✓</span>' : '';
+  el.innerHTML = !isChecked ? '<span style="color:#fff;font-size:11px">✓</span>' : '';
 }
 
-async function markPicked(jobId) {
-  const { error } = await sb.from('jobs').update({
-    status: 'picked',
+async function updateLocation(jobId, location) {
+  await sb.from('jobs').update({ yard_location: location||null }).eq('id', jobId);
+  const j = allJobs.find(x => x.id === jobId);
+  if (j) j.yard_location = location;
+}
+
+async function markReady(jobId) {
+  await sb.from('jobs').update({
+    status: 'ready',
     picked_by: App.staffId,
+    ready_confirmed_by: App.staffId,
+    ready_confirmed_at: new Date().toISOString(),
   }).eq('id', jobId);
-  if (error) { showToast('Could not update: ' + error.message, 'error'); return; }
-  await sb.from('job_log').insert({
-    job_id: jobId,
-    action: 'Picked',
-    performed_by: App.staffId,
-    performed_by_name: App.staff?.name,
-  });
-  showToast('Marked as picked ✓');
+  await sb.from('job_log').insert({ job_id:jobId, action:'Marked ready to load', performed_by:App.staffId, performed_by_name:App.staff?.name });
+  showToast('Marked as ready ✓');
+  await loadJobs();
+}
+
+async function markPartPicked(jobId) {
+  const notes = prompt('What has been picked so far? (e.g. Sheets done, waiting on gutters)');
+  if (notes === null) return;
+  await sb.from('jobs').update({ status:'part_picked', part_picked_notes:notes||null, picked_by:App.staffId }).eq('id', jobId);
+  await sb.from('job_log').insert({ job_id:jobId, action:`Part picked: ${notes||'—'}`, performed_by:App.staffId, performed_by_name:App.staff?.name });
+  showToast('Part picked noted');
+  await loadJobs();
+}
+
+async function markIBTArrived(jobId) {
+  await sb.from('jobs').update({ status:'unpicked', ibt_arrived:true }).eq('id', jobId);
+  await sb.from('job_log').insert({ job_id:jobId, action:'IBT arrived — ready to pick', performed_by:App.staffId, performed_by_name:App.staff?.name });
+  showToast('IBT arrived — moved to picking list');
   await loadJobs();
 }
 
 async function markLoaded(jobId) {
-  const { error } = await sb.from('jobs').update({
-    status: 'loaded',
-    loaded_by: App.staffId,
-  }).eq('id', jobId);
-  if (error) { showToast('Could not update: ' + error.message, 'error'); return; }
-  await sb.from('job_log').insert({
-    job_id: jobId,
-    action: 'Loaded onto vehicle',
-    performed_by: App.staffId,
-    performed_by_name: App.staff?.name,
-  });
+  await sb.from('jobs').update({ status:'loaded', loaded_by:App.staffId }).eq('id', jobId);
+  await sb.from('job_log').insert({ job_id:jobId, action:'Loaded onto vehicle', performed_by:App.staffId, performed_by_name:App.staff?.name });
   showToast('Marked as loaded ✓');
   await loadJobs();
 }
 
-function fmtLen(mm) {
-  if (!mm && mm !== 0) return '—';
-  return (mm / 1000).toFixed(3).replace(/\.?0+$/, '') + 'm';
-}
-
-function showToast(msg, type = 'success') {
+function showToast(msg, type='success') {
   const existing = document.getElementById('app-toast');
   if (existing) existing.remove();
   const toast = document.createElement('div');
   toast.id = 'app-toast';
-  toast.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;background:${type==='success'?'#1a7a4a':'#b91c1c'};color:#fff;font-family:var(--font)`;
+  toast.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:11px 18px;border-radius:10px;font-size:13px;font-weight:500;z-index:9999;background:${type==='success'?'#1a7a4a':'#b91c1c'};color:#fff;font-family:var(--font)`;
   toast.textContent = msg;
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
 }
-
-
 
 init();
 </script>

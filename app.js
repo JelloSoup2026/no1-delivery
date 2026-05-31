@@ -22,6 +22,24 @@ window.App = {
 };
 
 // ---- ROLE DEFINITIONS ----
+const READINESS = {
+  in_stock:         { label:'In stock',           color:'var(--green)',  bg:'var(--green-bg)',  icon:'✓' },
+  needs_ibt:        { label:'Needs IBT',           color:'#5b21b6',       bg:'#f5f3ff',          icon:'🔄' },
+  needs_supplier:   { label:'Needs supplier',      color:'var(--teal)',   bg:'var(--teal-bg)',   icon:'📦' },
+  needs_fabrication:{ label:'Needs fabrication',   color:'var(--amber)',  bg:'var(--amber-bg)',  icon:'🔧' },
+  direct_supplier:  { label:'Direct from supplier',color:'var(--brand)',  bg:'var(--brand-surface)', icon:'🚚' },
+};
+
+const RUN_SLOTS = ['6am','1st','2nd','3rd','4th','5th'];
+const RUN_SLOT_LABELS = {
+  '6am': '6am Drop ⚡',
+  '1st': '1st Run',
+  '2nd': '2nd Run',
+  '3rd': '3rd Run',
+  '4th': '4th Run',
+  '5th': '5th Run',
+};
+
 const ROLES = {
   super_admin:      { label: 'Super Admin',       color: '#00479f' },
   branch_manager:   { label: 'Branch Manager',    color: '#4b7fb9' },
@@ -52,11 +70,15 @@ const JOB_STATUSES = {
 };
 
 const STATUS_NEXT = {
-  unpicked:  'picked',
-  picked:    'loaded',
-  loaded:    'departed',
-  departed:  'arrived',
-  arrived:   'delivered',
+  unpicked:            'ready',
+  waiting_ibt:         'part_picked',
+  waiting_supplier:    'ready',
+  waiting_fabrication: 'ready',
+  part_picked:         'ready',
+  ready:               'loaded',
+  loaded:              'departed',
+  departed:            'arrived',
+  arrived:             'delivered',
 };
 
 const JOB_TYPES = {
@@ -443,6 +465,12 @@ function statusPill(status) {
 }
 
 // Generate a job type tag HTML
+function readinessPill(readiness) {
+  const r = READINESS[readiness];
+  if (!r || readiness === 'in_stock') return '';
+  return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;background:${r.bg};color:${r.color};border:0.5px solid ${r.color}44">${r.icon} ${r.label}</span>`;
+}
+
 function typeTag(type) {
   const t = JOB_TYPES[type];
   if (!type || type === 'standard' || !t) return '';
